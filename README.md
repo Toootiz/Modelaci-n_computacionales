@@ -1,3 +1,9 @@
-# TC2008B Repository for Final Proyect
+# TC2008B
+**Modelación de sistemas multiagentes con gráficas computacionales**
 
-## Simulation of CDMX traffic through a mesa python file, a flask server and WebGl
+## Simulation of CDMX traffic through python and js [Vite](https://guthib.com) server using [Mesa](https://mesa.readthedocs.io) and [WebGL](https://idk.com).
+
+## Team Members
+
+- [Gabriel Muñoz Luna](https://github.com/Toootiz)
+- [Miguel Enrique Soria](https://github.com/mesc2004)
