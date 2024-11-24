@@ -1,3 +1,10 @@
+/*
+ * Miguel Enrique Soria A01028033
+ * 22/11/2024
+ * Main file for the frontend of the city agents visualization.
+ * This file uses WebGL to render the multiple agents and city components through obj files and twgl.
+ */
+
 "use strict";
 
 import * as twgl from "twgl.js";
