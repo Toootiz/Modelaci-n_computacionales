@@ -31,6 +31,7 @@ class CityModel(Model):
             self.static_map = [[None for _ in range(self.width)] for _ in range(self.height)]
             
             # Goes through each character in the map file and creates the corresponding agent.
+            # Goes through each character in the map file and creates the corresponding agent.
             for r, row in enumerate(lines):
                 for c, col in enumerate(row):
                     cell_pos = (c, self.height - r - 1)
@@ -56,6 +57,13 @@ class CityModel(Model):
                         agent = Destination(f"d_{r*self.width+c}", self)
                         self.grid.place_agent(agent, cell_pos)
                         self.static_map[cell_pos[1]][cell_pos[0]] = {"type": "Destination"}
+
+                    elif col in ["I", "i", "O", "o", "A", "a", "Z", "z"]:  # Intersecciones
+                        directions = dataDictionary[col]  # Obtener las direcciones asociadas
+                        agent = Road(f"r_{r*self.width+c}", self, directions)
+                        self.grid.place_agent(agent, cell_pos)
+                        self.static_map[cell_pos[1]][cell_pos[0]] = {"type": "Intersection", "directions": directions}
+
                 
             # Agregar un agente Car en la posición (0, 0)
             car = Car("car_0", self)

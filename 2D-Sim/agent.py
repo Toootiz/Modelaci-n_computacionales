@@ -53,36 +53,76 @@ class Car(Agent):
 
     def move(self):
         """
-        Moves the car strictly following the direction of the Road it is currently on or,
-        if on a Traffic Light, follows the direction of the previous Road.
+        Moves the car, handling intersections, traffic lights, and regular roads.
         """
         # Obtener la posición actual
         x, y = self.pos
         current_cell = self.map_knowledge[y][x]
 
-        # Verificar si la celda actual es un semáforo
+        # Verificar si la celda actual es válida
+        if not current_cell:
+            return  # No hacer nada si la celda actual no es válida
+
+        # Verificar si hay un semáforo delante
         current_cell_contents = self.model.grid.get_cell_list_contents(self.pos)
         traffic_light = next((agent for agent in current_cell_contents if isinstance(agent, Traffic_Light)), None)
 
-        # Si está en un semáforo, usar la dirección previa para decidir el siguiente movimiento
+        # Si el coche está frente a un semáforo
+        if not traffic_light:
+            # Verificar si hay un semáforo en la siguiente celda en la dirección actual
+            if self.previous_direction == "Right":
+                next_position = (x + 1, y)
+            elif self.previous_direction == "Left":
+                next_position = (x - 1, y)
+            elif self.previous_direction == "Up":
+                next_position = (x, y + 1)
+            elif self.previous_direction == "Down":
+                next_position = (x, y - 1)
+            else:
+                next_position = None
+
+            if next_position:
+                nx, ny = next_position
+                if 0 <= nx < self.model.width and 0 <= ny < self.model.height:
+                    # Obtener contenido de la siguiente celda
+                    cell_contents = self.model.grid.get_cell_list_contents(next_position)
+                    next_traffic_light = next((agent for agent in cell_contents if isinstance(agent, Traffic_Light)), None)
+
+                    # Si hay un semáforo en la siguiente celda
+                    if next_traffic_light:
+                        if not next_traffic_light.state:  # Semáforo en rojo
+                            print(f"Coche {self.unique_id} se detuvo frente al semáforo en {next_position}.")
+                            return
+                        else:
+                            # Semáforo en verde: avanzar al semáforo
+                            print(f"Coche {self.unique_id} avanzó al semáforo en {next_position}.")
+                            self.model.grid.move_agent(self, next_position)
+                            return
+
+        # Si el coche está en un semáforo
         if traffic_light:
-            if not self.previous_direction:
-                return  # Si no hay dirección previa, no avanzar
-            current_direction = self.previous_direction
+            if not traffic_light.state:  # Semáforo en rojo
+                print(f"Coche {self.unique_id} se detuvo en el semáforo en {self.pos}.")
+                return  # No avanzar si el semáforo está en rojo
+            else:
+                # Semáforo en verde: avanzar usando la dirección previa
+                current_direction = self.previous_direction
+        elif current_cell["type"] == "Intersection":
+            # Si está en una intersección, tomar la primera dirección disponible
+            directions = current_cell["directions"]
+            current_direction = directions[0]  # Elegir la primera dirección
+            print(f"Intersección detectada en {self.pos}. Direcciones disponibles: {directions}. Usando: {current_direction}")
+            self.previous_direction = current_direction  # Actualizar la dirección previa
         else:
-            # Si no está en un semáforo, tomar la dirección de la celda actual
+            # Si no está en un semáforo o intersección, tomar la dirección de la calle
             if not current_cell or current_cell["type"] != "Road":
                 return  # No hacer nada si no está en una calle
             current_direction = current_cell["direction"]
             self.previous_direction = current_direction  # Actualizar la dirección anterior
 
-        # Obtener las celdas alrededor del coche
+        # Obtener las celdas alrededor del coche (para debug o lógica futura)
         surroundings = self.get_surroundings(self.pos)
         print(f"Alrededor de {self.pos}: {[(pos, [type(a).__name__ for a in agents]) for pos, agents in surroundings.items()]}")
-
-        # Inspeccionar las próximas celdas en la dirección actual
-        next_cells = self.get_next_cells((x, y), current_direction, steps=3)
-        print(f"Próximas celdas en dirección {current_direction}: {[(cell['position'], [type(a).__name__ for a in cell['contents']]) for cell in next_cells]}")
 
         # Calcular la posición candidata basada en la dirección actual
         next_position = None
@@ -95,7 +135,7 @@ class Car(Agent):
         elif current_direction == "Down":
             next_position = (x, y - 1)
 
-        # Verificar si la nueva posición es válida y está dentro de los límites
+        # Verificar si la nueva posición es válida
         if next_position:
             nx, ny = next_position
             if 0 <= nx < self.model.width and 0 <= ny < self.model.height:
@@ -105,6 +145,7 @@ class Car(Agent):
                 # Verificar si hay un semáforo en la nueva posición
                 next_traffic_light = next((agent for agent in cell_contents if isinstance(agent, Traffic_Light)), None)
                 if next_traffic_light and not next_traffic_light.state:  # Semáforo en rojo
+                    print(f"Semáforo rojo detectado en {next_position}. Deteniéndose.")
                     return  # No moverse si el semáforo está en rojo
 
                 # Verificar si hay un destino en la nueva posición
@@ -113,9 +154,14 @@ class Car(Agent):
                     print(f"Coche {self.unique_id} ha alcanzado su destino en {next_position}.")
                     return  # Detenerse al llegar al destino
 
-                # Moverse a la nueva posición si contiene una calle o un semáforo en verde
-                if any(isinstance(agent, Road) for agent in cell_contents) or next_traffic_light:
+                # Moverse a la nueva posición si contiene una calle
+                if any(isinstance(agent, Road) for agent in cell_contents):
                     self.model.grid.move_agent(self, next_position)
+                    print(f"Coche {self.unique_id} avanzó a {next_position} siguiendo la dirección {current_direction}.")
+                    return  # Detener el movimiento después de avanzar
+
+
+
 
     def step(self):
         """
