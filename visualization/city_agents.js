@@ -3,6 +3,7 @@
 import * as twgl from "twgl.js";
 import GUI from "lil-gui";
 
+import wheel from "../assets/wheel.obj?raw";
 // Define the vertex shader code, using GLSL 3.00
 const vsGLSL = `#version 300 es
 in vec4 a_position;
@@ -31,6 +32,48 @@ void main() {
 outColor = v_color;
 }
 `;
+
+function loadObj(data) {
+  const lines = data.split("\n");
+  // lines are splite per backspace (por cada vertice, cara, color o normal)
+  const pos = [[0, 0, 0]];
+  const normals = [[0, 0, 0]];
+  const colors = [];
+  const a_position = [];
+  const a_normal = [];
+
+  lines.forEach((line) => {
+    const parts = line.trim().split(/\s+/);
+    const type = parts[0];
+
+    if (type == "v") {
+      // vertices
+      pos.push(parts.slice(1).map(parseFloat));
+    } else if (type == "vn") {
+      // normales
+      normals.push(parts.slice(1).map(parseFloat));
+    } else if (type == "c") {
+      // colores
+      colors.push(...parts.slice(1).map(parseFloat));
+    } else if (type == "f") {
+      // caras
+      for (let part of parts.slice(1)) {
+        const indices = part.split("/").map((n) => parseInt(n, 10));
+        a_position.push(...pos[indices[0]]);
+        a_normal.push(...normals[indices[2]]);
+      }
+    } else {
+      return;
+    }
+  });
+
+  return {
+    // setea los parametros
+    a_position: { numComponents: 3, data: a_position },
+    a_normal: { numComponents: 3, data: a_normal },
+    a_color: { numComponents: 4, data: colors },
+  };
+}
 
 // Define the Object3D class to represent 3D objects
 class Object3D {
@@ -87,7 +130,7 @@ async function main() {
   programInfo = twgl.createProgramInfo(gl, [vsGLSL, fsGLSL]);
 
   // Generate the agent and obstacle data
-  agentArrays = generateData(1);
+  agentArrays = loadObj(wheel);
   obstacleArrays = generateObstacleData(1);
 
   // Create buffer information from the agent and obstacle data
