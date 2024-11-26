@@ -59,9 +59,6 @@ function loadObj(data) {
     } else if (type == "vn") {
       // normales
       normals.push(parts.slice(1).map(parseFloat));
-    } else if (type == "c") {
-      // colores
-      colors.push(...parts.slice(1).map(parseFloat));
     } else if (type == "f") {
       // caras
       for (let part of parts.slice(1)) {
@@ -137,7 +134,7 @@ async function main() {
   programInfo = twgl.createProgramInfo(gl, [vsGLSL, fsGLSL]);
 
   // Generate the agent and obstacle data
-  agentArrays = loadObj(wheel);
+  agentArrays = generateData(1);
   obstacleArrays = generateObstacleData(1);
 
   // Create buffer information from the agent and obstacle data
