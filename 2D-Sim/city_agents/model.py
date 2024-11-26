@@ -1,7 +1,7 @@
-from mesa import Model
+from mesa import Model, agent
 from mesa.time import RandomActivation
 from mesa.space import MultiGrid
-from agent import *
+from .agent import *
 import json
 
 class CityModel(Model):

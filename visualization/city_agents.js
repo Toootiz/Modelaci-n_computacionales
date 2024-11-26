@@ -120,9 +120,9 @@ let frameCount = 0;
 
 // Define the data object
 const data = {
-  NAgents: 5,
-  width: 10,
-  height: 10,
+  numAgents: 1,
+  width: 24,
+  height: 25,
 };
 
 // Main function to initialize and run the application
