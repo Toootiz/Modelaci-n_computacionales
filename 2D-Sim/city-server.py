@@ -1,4 +1,3 @@
-
 # Miguel Soria A01028033
 # Script for managing the flask server that sends data to the vite server
 # to render the sent data in WebGL
@@ -70,26 +69,6 @@ def getAgents():
             print(f"Exception in getAgents: {e}")
             return jsonify({"message": "Error with the agent positions", "error": str(e)}), 500
 
-# This route will be used to get the positions and states of the traffic lights
-@app.route('/getLights', methods=['GET'])
-@cross_origin()
-def getLights():
-    global cityModel
-
-    if cityModel is None:
-        return jsonify({"message": "Model not initialized"}), 400
-
-    if request.method == 'GET':
-        try:
-            lightPositions = [
-                {"id": str(a.unique_id), "x": a.pos[0], "y": 1, "z": a.pos[1], "state": a.state}
-                for a in cityModel.schedule.agents
-                if isinstance(a, Traffic_Light)
-            ]
-            return jsonify({'positions': lightPositions})
-        except Exception as e:
-            print(f"Exception in getLights: {e}")
-            return jsonify({"message": "Error with the traffic light positions"}), 500
 
 @app.route('/getObstacles', methods=['GET'])
 @cross_origin()
@@ -117,6 +96,89 @@ def getObstacles():
             print(traceback.format_exc())
             print(f"Exception in getObstacles: {e}")
             return jsonify({"message": "Error with the obstacle positions"}), 500
+
+@app.route('/getLights', methods=['GET'])
+@cross_origin()
+def getLights():
+    global cityModel
+
+    if cityModel is None:
+        return jsonify({"message": "Model not initialized"}), 400
+
+    if request.method == 'GET':
+        try:
+            lightPositions = [
+                {"id": str(a.unique_id), "x": x, "y": 1, "z": y}
+                for cell_contents, (x, y) in cityModel.grid.coord_iter()
+                for a in cell_contents if isinstance(a, Traffic_Light)
+            ]
+
+            # for cell_contents, x, y in cityModel.grid.coord_iter():
+            #     for a in cell_contents:
+            #         if isinstance(a, Obstacle):
+            #             lightPositions.append({"id": str(a.unique_id), "x": x, "y": 1, "z": y})
+
+            return jsonify({'positions': lightPositions})
+        except Exception as e:
+            print(traceback.format_exc())
+            print(f"Exception in getObstacles: {e}")
+            return jsonify({"message": "Error with the obstacle positions"}), 500
+
+
+@app.route('/getDestinations', methods=['GET'])
+@cross_origin()
+def getDestinations():
+    global cityModel
+
+    if cityModel is None:
+        return jsonify({"message": "Model not initialized"}), 400
+
+    if request.method == 'GET':
+        try:
+            destPositions = [
+                {"id": str(a.unique_id), "x": x, "y": 1, "z": y}
+                for cell_contents, (x, y) in cityModel.grid.coord_iter()
+                for a in cell_contents if isinstance(a, Destination)
+            ]
+
+            # for cell_contents, x, y in cityModel.grid.coord_iter():
+            #     for a in cell_contents:
+            #         if isinstance(a, Obstacle):
+            #             destPositions.append({"id": str(a.unique_id), "x": x, "y": 1, "z": y})
+
+            return jsonify({'positions': destPositions})
+        except Exception as e:
+            print(traceback.format_exc())
+            print(f"Exception in getObstacles: {e}")
+            return jsonify({"message": "Error with the obstacle positions"}), 500
+
+@app.route('/getRoads', methods=['GET'])
+@cross_origin()
+def getRoads():
+    global cityModel
+
+    if cityModel is None:
+        return jsonify({"message": "Model not initialized"}), 400
+
+    if request.method == 'GET':
+        try:
+            roadPositions = [
+                {"id": str(a.unique_id), "x": x, "y": 1, "z": y}
+                for cell_contents, (x, y) in cityModel.grid.coord_iter()
+                for a in cell_contents if isinstance(a, Roads)
+            ]
+
+            # for cell_contents, x, y in cityModel.grid.coord_iter():
+            #     for a in cell_contents:
+            #         if isinstance(a, Obstacle):
+            #             roadPositions.append({"id": str(a.unique_id), "x": x, "y": 1, "z": y})
+
+            return jsonify({'positions': roadPositions})
+        except Exception as e:
+            print(traceback.format_exc())
+            print(f"Exception in getObstacles: {e}")
+            return jsonify({"message": "Error with the obstacle positions"}), 500
+
 
 # This route will be used to update the model
 @app.route('/update', methods=['GET'])
