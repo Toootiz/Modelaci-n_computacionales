@@ -26,7 +26,7 @@ This should install the necessary versions according to repository settings.
 ### Optional for faster execution with single command
 If you wish to be able to run the project with one command, in the root of the repository run:
 - `npm install` or `npm i`
-This will allow you to use an npm command to run the project. If you wish to skip this step, you can use the instructions shown [here](run-each-server-manually)
+This will allow you to use an npm command to run the project. If you wish to skip this step, you can use the instructions shown [here](#run-each-server-manually)
 
 ## Running the project
 
