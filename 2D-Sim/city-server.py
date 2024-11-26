@@ -108,15 +108,10 @@ def getLights():
     if request.method == 'GET':
         try:
             lightPositions = [
-                {"id": str(a.unique_id), "x": x, "y": 1, "z": y}
+                {"id": str(a.unique_id), "x": x, "y": 2, "z": y, "state": a.state}
                 for cell_contents, (x, y) in cityModel.grid.coord_iter()
                 for a in cell_contents if isinstance(a, Traffic_Light)
             ]
-
-            # for cell_contents, x, y in cityModel.grid.coord_iter():
-            #     for a in cell_contents:
-            #         if isinstance(a, Obstacle):
-            #             lightPositions.append({"id": str(a.unique_id), "x": x, "y": 1, "z": y})
 
             return jsonify({'positions': lightPositions})
         except Exception as e:
@@ -136,7 +131,7 @@ def getDestinations():
     if request.method == 'GET':
         try:
             destPositions = [
-                {"id": str(a.unique_id), "x": x, "y": 1, "z": y}
+                {"id": str(a.unique_id), "x": x, "y": 0, "z": y}
                 for cell_contents, (x, y) in cityModel.grid.coord_iter()
                 for a in cell_contents if isinstance(a, Destination)
             ]
@@ -163,9 +158,9 @@ def getRoads():
     if request.method == 'GET':
         try:
             roadPositions = [
-                {"id": str(a.unique_id), "x": x, "y": 1, "z": y}
+                {"id": str(a.unique_id), "x": x, "y": 0, "z": y}
                 for cell_contents, (x, y) in cityModel.grid.coord_iter()
-                for a in cell_contents if isinstance(a, Roads)
+                for a in cell_contents if isinstance(a, Road)
             ]
 
             # for cell_contents, x, y in cityModel.grid.coord_iter():
