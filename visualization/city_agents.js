@@ -18,6 +18,7 @@ import buildingMtl from "../assets/building.mtl?raw";
 
 import cubeObj from "../assets/cube.obj?raw";
 import sphereObj from "../assets/sphere.obj?raw";
+import trafficLightObj from "../assets/traffic_lights.obj?raw";
 
 import vsGLSL from "../assets/shaders/vs_phong.glsl?raw";
 import fsGLSL from "../assets/shaders/fs_phong.glsl?raw";
@@ -143,7 +144,7 @@ async function main() {
   // Generate the data for the different objects
   const agentArrays = loadObj(deLoreanObj);
   const obstacleArrays = loadObj(buildingObj);
-  const lightArrays = loadObj(sphereObj);
+  const lightArrays = loadObj(trafficLightObj);
   const destinationArrays = loadObj(cubeObj);
   const roadArrays = loadObj(cubeObj);
 

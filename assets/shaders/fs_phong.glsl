@@ -27,18 +27,27 @@ void main() {
 
     //Diffuse light component
     vec4 diffuse = vec4(0, 0, 0, 1);
+    vec4 specular = vec4(0, 0, 0, 1);
     vec3 v_n_n = normalize(v_normal); //vector normalizado
     vec3 v_l_n = normalize(v_lightDirection); 
     float lambert = dot(v_n_n, v_l_n);
     if(lambert > 0.0){
         diffuse = u_diffuseLight * u_diffuseColor * lambert;
+        //Specular light component
+        vec3 v_c_n = normalize(v_cameraDirection);
+        vec3 v_paralelo = v_n_n * dot(v_n_n, v_l_n);
+        vec3 v_perpendicular = v_l_n - v_paralelo;
+        vec3 v_reflejado = v_paralelo - v_perpendicular;
+        float spec = dot(v_c_n, v_reflejado);
+        if(spec > 0.0){
+            specular = u_specularLight * u_specularColor * pow(spec, u_shininess);
+        };
     };
 
     //Specular light component
-    vec4 specular = vec4(0, 0, 0, 1);
     vec3 v_c_n = normalize(v_cameraDirection);
     vec3 v_paralelo = v_n_n * dot(v_n_n, v_l_n);
-    vec3 v_perpendicular = v_n_n - v_paralelo;
+    vec3 v_perpendicular = v_l_n - v_paralelo;
     vec3 v_reflejado = v_paralelo - v_perpendicular;
     float spec = dot(v_c_n, v_reflejado);
     if(spec > 0.0){
