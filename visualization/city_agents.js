@@ -138,7 +138,7 @@ let frameCount = 0;
 
 // Define the data object
 const data = {
-  numAgents: 1,
+  numAgents: 4,
   width: 24,
   height: 25,
 };
@@ -295,7 +295,7 @@ async function getObstacles() {
           obstacle.id,
           [obstacle.x, obstacle.y, obstacle.z],
           [0, 0, 0],
-          [0, 0.8, 0.6],
+          [0.6, 0.8, 0.6],
           [0.5, 0.5, 0.8, 1],
         ); // Gray color
         obstacles.push(newObstacle);
