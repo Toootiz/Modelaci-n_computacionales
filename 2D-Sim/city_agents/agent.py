@@ -60,13 +60,13 @@ class Car(Agent):
         Actualiza la dirección del coche basado en el movimiento realizado.
         """
         if next_pos[0] > current_pos[0]:
-            self.direction = "right"
+            self.direction = "Right"
         elif next_pos[0] < current_pos[0]:
-            self.direction = "left"
+            self.direction = "Left"
         elif next_pos[1] > current_pos[1]:
-            self.direction = "up"
+            self.direction = "Up"
         elif next_pos[1] < current_pos[1]:
-            self.direction = "down"
+            self.direction = "Down"
         print(f"Coche {self.unique_id} cambió dirección a {self.direction}.")
 
     def move(self):

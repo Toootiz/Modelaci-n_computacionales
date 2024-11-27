@@ -244,13 +244,13 @@ async function getAgents() {
         );
 
         // Determinar la rotación según la dirección del agente
-        if (agent.direction == "up") {
+        if (agent.direction == "Up") {
           rotation = [0, 0, 0];
-        } else if (agent.direction == "down") {
+        } else if (agent.direction == "Down") {
           rotation = [0, Math.PI, 0];
-        } else if (agent.direction == "left") {
+        } else if (agent.direction == "Left") {
           rotation = [0, -Math.PI / 2, 0];
-        } else if (agent.direction == "right") {
+        } else if (agent.direction == "Right") {
           rotation = [0, Math.PI / 2, 0];
         } else {
           rotation = [0, 0, 0];

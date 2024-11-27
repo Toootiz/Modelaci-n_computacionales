@@ -100,6 +100,14 @@ class CityModel(Model):
             if not any(isinstance(agent, (Car, Obstacle)) for agent in cell_contents):
                 # Crear y asignar el coche si la celda está libre
                 car = Car(f"car_{self.spawned_agents}", self)
+                if spawn_pos == (0, 0):
+                    car.direction = "Right"
+                elif spawn_pos == (self.width - 1, 0):
+                    car.direction = "Up"
+                elif spawn_pos == (0, self.height - 1):
+                    car.direction = "Down"
+                elif spawn_pos == (self.width - 1, self.height - 1):
+                    car.direction = "Left"
                 self.grid.place_agent(car, spawn_pos)
                 self.schedule.add(car)
                 if self.destinations:
