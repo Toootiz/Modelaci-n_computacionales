@@ -219,35 +219,49 @@ async function initAgentsModel() {
  */
 async function getAgents() {
   try {
-    // Send a GET request to the agent server to retrieve the agent positions
+    // Enviar una solicitud GET al servidor de agentes para obtener las posiciones
     let response = await fetch(agent_server_uri + "getAgents");
+    let rotation = [0, 0, 0];
 
-    // Check if the response was successful
+    // Verificar si la respuesta fue exitosa
     if (response.ok) {
-      // Parse the response as JSON
+      // Analizar la respuesta como JSON
       let result = await response.json();
 
-      // Log the agent positions
+      // Registrar las posiciones de los agentes
       console.log(result.positions);
 
-      // Track the received agent IDs
+      // Obtener los IDs de los agentes recibidos
       const receivedIds = result.positions.map((agent) => agent.id);
 
-      // Remove agents that are no longer in the response
+      // Eliminar agentes que ya no están en la respuesta
       agents = agents.filter((object3d) => receivedIds.includes(object3d.id));
 
-      // Add new agents or update existing ones
+      // Agregar nuevos agentes o actualizar los existentes
       for (const agent of result.positions) {
         const existingAgent = agents.find(
           (object3d) => object3d.id === agent.id,
         );
 
+        // Determinar la rotación según la dirección del agente
+        if (agent.direction == "up") {
+          rotation = [0, 0, 0];
+        } else if (agent.direction == "down") {
+          rotation = [0, Math.PI, 0];
+        } else if (agent.direction == "left") {
+          rotation = [0, -Math.PI / 2, 0];
+        } else if (agent.direction == "right") {
+          rotation = [0, Math.PI / 2, 0];
+        } else {
+          rotation = [0, 0, 0];
+        }
+
         if (!existingAgent) {
-          // Create a new agent and add it to the array
+          // Crear un nuevo agente y agregarlo al array
           const newAgent = new Object3D(
             agent.id,
             [agent.x, agent.y, agent.z],
-            [0, 0, 0],
+            rotation,
             [0.6, 0.8, 0.6],
             [0.1, 0.1, 0.1, 1], // ambientColor
             [0.7, 0.3, 0.85, 1], // diffuseColor
@@ -256,18 +270,19 @@ async function getAgents() {
           );
           agents.push(newAgent);
         } else {
-          // Update the existing agent's position
+          // Actualizar la posición y rotación del agente existente
           existingAgent.position = [agent.x, agent.y, agent.z];
+          existingAgent.rotation = rotation;
         }
       }
 
-      // Log the updated agents array
+      // Registrar el array de agentes actualizado
       console.log("Agents:", agents);
     } else {
       console.error("Failed to fetch agents:", response.statusText);
     }
   } catch (error) {
-    // Log any errors that occur during the request
+    // Registrar cualquier error que ocurra durante la solicitud
     console.error("Error fetching agents:", error);
   }
 }

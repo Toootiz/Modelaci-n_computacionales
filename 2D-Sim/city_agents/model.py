@@ -1,7 +1,7 @@
 from mesa import Model, agent
 from mesa.time import RandomActivation
 from mesa.space import MultiGrid
-from agent import *
+from .agent import *
 import json
 import random
 
@@ -15,7 +15,7 @@ class CityModel(Model):
     """
     def __init__(self, N):
         # Cargar el diccionario de datos del mapa
-        dataDictionary = json.load(open("../city_files/mapDictionary.json"))
+        dataDictionary = json.load(open("city_files/mapDictionary.json"))
 
         self.traffic_lights = []
         self.destinations = []  # Lista para almacenar las posiciones de los destinos
@@ -28,7 +28,7 @@ class CityModel(Model):
         self.step_count = 0  # Contador de pasos
 
         # Leer el archivo del mapa
-        with open('../city_files/2023_base.txt') as baseFile:
+        with open('city_files/2023_base.txt') as baseFile:
             lines = baseFile.readlines()
             self.width = len(lines[0]) - 1
             self.height = len(lines)
