@@ -17,74 +17,63 @@ import buildingObj from "../assets/building.obj?raw";
 import buildingMtl from "../assets/building.mtl?raw";
 
 import cubeObj from "../assets/cube.obj?raw";
+import sphereObj from "../assets/sphere.obj?raw";
 
-// import fsGLSL from "../assets/shaders/fs_phong.glsl?raw";
-// import vsGLSL from "../assets/shaders/vs_phong.glsl?raw";
+import vsGLSL from "../assets/shaders/vs_phong.glsl?raw";
+import fsGLSL from "../assets/shaders/fs_phong.glsl?raw";
 
-// Define the vertex shader code, using GLSL 3.00
-const vsGLSL = `#version 300 es
-in vec4 a_position;
+// Configuración de la luz y la cámara
+const settings = {
+  cameraPosition: {
+    x: 0,
+    y: 9,
+    z: 9,
+  },
+  lightPosition: {
+    x: 10,
+    y: 10,
+    z: 10,
+  },
+  ambientLight: [0.3, 0.3, 0.3, 1.0],
+  diffuseLight: [0.7, 0.7, 0.7, 1.0],
+  specularLight: [1.0, 1.0, 1.0, 1.0],
+};
 
-uniform mat4 u_matrix;
-uniform vec4 u_color;
-
-out vec4 v_color;
-
-void main() {
-  gl_Position = u_matrix * a_position;
-  v_color = u_color;
-}
-`;
-
-// Define the fragment shader code, using GLSL 3.00
-const fsGLSL = `#version 300 es
-precision highp float;
-
-in vec4 v_color;
-
-out vec4 outColor;
-
-void main() {
-  outColor = v_color;
-}
-`;
+let frameCount = 0;
 
 // carga los datos del obj a json
 function loadObj(data) {
   const lines = data.split("\n");
-  // lines are splite per backspace (por cada vertice, cara, color o normal)
-  const pos = [[0, 0, 0]];
-  const normals = [[0, 0, 0]];
-  const colors = [];
-  const a_position = [];
-  const a_normal = [];
+  const positions = [];
+  const normals = [];
+  const indices = [];
+
+  const tempPositions = [];
+  const tempNormals = [];
 
   lines.forEach((line) => {
     const parts = line.trim().split(/\s+/);
     const type = parts[0];
 
-    if (type == "v") {
-      // vertices
-      pos.push(parts.slice(1).map(parseFloat));
-    } else if (type == "vn") {
-      // normales
-      normals.push(parts.slice(1).map(parseFloat));
-    } else if (type == "f") {
-      // caras
-      for (let part of parts.slice(1)) {
-        const indices = part.split("/").map((n) => parseInt(n, 10));
-        a_position.push(...pos[indices[0]]);
-        a_normal.push(...normals[indices[2]]);
-      }
-    } else {
-      return;
+    if (type === "v") {
+      tempPositions.push(parts.slice(1).map(parseFloat));
+    } else if (type === "vn") {
+      tempNormals.push(parts.slice(1).map(parseFloat));
+    } else if (type === "f") {
+      const faceVertices = parts.slice(1);
+      faceVertices.forEach((vertex) => {
+        const [vIdx, , nIdx] = vertex
+          .split("/")
+          .map((idx) => parseInt(idx) - 1);
+        positions.push(...tempPositions[vIdx]);
+        normals.push(...tempNormals[nIdx]);
+      });
     }
   });
 
   return {
-    // setea los parametros
-    a_position: { numComponents: 3, data: a_position },
-    a_normal: { numComponents: 3, data: a_normal },
+    a_position: { numComponents: 3, data: positions },
+    a_normal: { numComponents: 3, data: normals },
   };
 }
 
@@ -95,13 +84,19 @@ class Object3D {
     position = [0, 0, 0],
     rotation = [0, 0, 0],
     scale = [1, 1, 1],
-    color = [1, 1, 1, 1],
+    ambientColor = [0.2, 0.2, 0.2, 1],
+    diffuseColor = [0.8, 0.8, 0.8, 1],
+    specularColor = [1.0, 1.0, 1.0, 1],
+    shininess = 50,
   ) {
     this.id = id;
     this.position = position;
     this.rotation = rotation;
     this.scale = scale;
-    this.color = color;
+    this.ambientColor = ambientColor;
+    this.diffuseColor = diffuseColor;
+    this.specularColor = specularColor;
+    this.shininess = shininess;
     this.matrix = twgl.m4.create();
   }
 }
@@ -130,12 +125,6 @@ let gl,
   destinationsVao,
   roadsVao;
 
-// Define the camera position
-let cameraPosition = { x: 0, y: 9, z: 9 };
-
-// Initialize the frame count
-let frameCount = 0;
-
 // Define the data object
 const data = {
   numAgents: 4,
@@ -154,7 +143,7 @@ async function main() {
   // Generate the data for the different objects
   const agentArrays = loadObj(deLoreanObj);
   const obstacleArrays = loadObj(buildingObj);
-  const lightArrays = generateSphereData(0.5, 60);
+  const lightArrays = loadObj(sphereObj);
   const destinationArrays = loadObj(cubeObj);
   const roadArrays = loadObj(cubeObj);
 
@@ -259,7 +248,10 @@ async function getAgents() {
             [agent.x, agent.y, agent.z],
             [0, 0, 0],
             [0.6, 0.8, 0.6],
-            [1, 0, 1, 1],
+            [0.1, 0.1, 0.1, 1], // ambientColor
+            [0.7, 0.3, 0.85, 1], // diffuseColor
+            [1.0, 1.0, 1.0, 1], // specularColor
+            50, // shininess
           );
           agents.push(newAgent);
         } else {
@@ -299,7 +291,10 @@ async function getObstacles() {
           [obstacle.x, obstacle.y, obstacle.z],
           [0, 0, 0],
           [0.6, 0.8, 0.6],
-          [0.5, 0.5, 0.8, 1],
+          [0.2, 0.2, 0.2, 1], // ambientColor
+          [0.5, 0.5, 0.8, 1], // diffuseColor
+          [0.3, 0.3, 0.3, 1], // specularColor
+          10, // shininess
         ); // Gray color
         obstacles.push(newObstacle);
       }
@@ -332,12 +327,19 @@ async function getLights() {
       if (trafficLights.length == 0) {
         // Create new traffic lights and add them to the trafficLights array
         for (const light of result.positions) {
+          const color = light.state
+            ? [0.0, 1.0, 0.0, 1.0]
+            : [1.0, 0.0, 0.0, 1.0]; // Green or Red
+
           const newLight = new Object3D(
             light.id,
             [light.x, light.y, light.z],
             [0, 0, 0],
             [0.5, 0.5, 0.5],
-            light.state ? [0, 1, 0, 1] : [1, 0, 0, 1], // Green if true, red if false
+            [0.1, 0.1, 0.1, 1], // ambientColor
+            color, // diffuseColor
+            [1.0, 1.0, 1.0, 1], // specularColor
+            30, // shininess
           );
           trafficLights.push(newLight);
 
@@ -347,7 +349,10 @@ async function getLights() {
             [light.x, light.y - 1.001, light.z],
             [0, 0, 0],
             [1, 0.2, 1],
-            [0.3, 0.3, 0.3, 1],
+            [0.1, 0.1, 0.1, 1], // ambientColor
+            [0.3, 0.3, 0.3, 1], // diffuseColor
+            [0.3, 0.3, 0.3, 1], // specularColor
+            5, // shininess
           ); // Dark gray color
           roads.push(newRoad);
         }
@@ -364,7 +369,9 @@ async function getLights() {
           if (current_light != undefined) {
             // Update the traffic light's state and color
             current_light.state = light.state;
-            current_light.color = light.state ? [0, 1, 0, 1] : [1, 0, 0, 1]; // Green if true, red if false
+            current_light.diffuseColor = light.state
+              ? [0.0, 1.0, 0.0, 1.0]
+              : [1.0, 0.0, 0.0, 1.0]; // Green or Red
           }
         }
       }
@@ -395,7 +402,10 @@ async function getDestinations() {
           [dest.x, dest.y, dest.z],
           [0, 0, 0],
           [1, 0.2, 1],
-          [0, 0, 1, 1],
+          [0.1, 0.1, 0.1, 1], // ambientColor
+          [0.0, 0.0, 1.0, 1], // diffuseColor (Blue)
+          [0.3, 0.3, 0.3, 1], // specularColor
+          10, // shininess
         ); // Blue color
         destinations.push(newDestination);
       }
@@ -428,7 +438,10 @@ async function getRoads() {
           [road.x, road.y, road.z],
           [0, 0, 0],
           [1, 0.2, 1],
-          [0.3, 0.3, 0.3, 1],
+          [0.1, 0.1, 0.1, 1], // ambientColor
+          [0.3, 0.3, 0.3, 1], // diffuseColor
+          [0.3, 0.3, 0.3, 1], // specularColor
+          5, // shininess
         ); // Dark gray color
         roads.push(newRoad);
       }
@@ -483,6 +496,24 @@ async function drawScene() {
   // Use the program
   gl.useProgram(programInfo.program);
 
+  // Configura los uniformes globales (escena)
+  const globalUniforms = {
+    u_viewWorldPosition: [
+      settings.cameraPosition.x + data.width / 2,
+      settings.cameraPosition.y,
+      settings.cameraPosition.z + data.height / 2,
+    ],
+    u_lightWorldPosition: [
+      settings.lightPosition.x,
+      settings.lightPosition.y,
+      settings.lightPosition.z,
+    ],
+    u_ambientLight: settings.ambientLight,
+    u_diffuseLight: settings.diffuseLight,
+    u_specularLight: settings.specularLight,
+  };
+  twgl.setUniforms(programInfo, globalUniforms);
+
   // Set up the view-projection matrix
   const viewProjectionMatrix = setupWorldView(gl);
 
@@ -503,10 +534,8 @@ async function drawScene() {
   drawObjects(agents, agentsVao, agentsBufferInfo, viewProjectionMatrix);
   drawObjects(trafficLights, lightsVao, lightsBufferInfo, viewProjectionMatrix);
 
-  // Increment the frame count
   frameCount++;
 
-  // Update the scene every 30 frames
   if (frameCount % 30 == 0) {
     frameCount = 0;
     await update();
@@ -529,17 +558,34 @@ function drawObjects(objectsArray, vao, bufferInfo, viewProjectionMatrix) {
     const obj_trans = twgl.v3.create(...obj.position);
     const obj_scale = twgl.v3.create(...obj.scale);
 
-    // Calculate the object's matrix
-    obj.matrix = twgl.m4.translate(viewProjectionMatrix, obj_trans);
-    obj.matrix = twgl.m4.rotateX(obj.matrix, obj.rotation[0]);
-    obj.matrix = twgl.m4.rotateY(obj.matrix, obj.rotation[1]);
-    obj.matrix = twgl.m4.rotateZ(obj.matrix, obj.rotation[2]);
-    obj.matrix = twgl.m4.scale(obj.matrix, obj_scale);
+    // Calculate the object's world matrix
+    let worldMatrix = twgl.m4.identity();
+    worldMatrix = twgl.m4.translate(worldMatrix, obj_trans);
+    worldMatrix = twgl.m4.rotateX(worldMatrix, obj.rotation[0]);
+    worldMatrix = twgl.m4.rotateY(worldMatrix, obj.rotation[1]);
+    worldMatrix = twgl.m4.rotateZ(worldMatrix, obj.rotation[2]);
+    worldMatrix = twgl.m4.scale(worldMatrix, obj_scale);
+
+    // Calculate the world-view-projection matrix
+    const worldViewProjectionMatrix = twgl.m4.multiply(
+      viewProjectionMatrix,
+      worldMatrix,
+    );
+
+    // Calculate the inverse transpose of the world matrix for normals
+    const worldInverseTransposeMatrix = twgl.m4.transpose(
+      twgl.m4.inverse(worldMatrix),
+    );
 
     // Set the uniforms for the object
-    let uniforms = {
-      u_matrix: obj.matrix,
-      u_color: obj.color,
+    const uniforms = {
+      u_world: worldMatrix,
+      u_worldInverseTransform: worldInverseTransposeMatrix,
+      u_worldViewProjection: worldViewProjectionMatrix,
+      u_ambientColor: obj.ambientColor,
+      u_diffuseColor: obj.diffuseColor,
+      u_specularColor: obj.specularColor,
+      u_shininess: obj.shininess,
     };
 
     // Set the uniforms and draw the object
@@ -569,9 +615,9 @@ function setupWorldView(gl) {
 
   // Calculate the camera position
   const camPos = twgl.v3.create(
-    cameraPosition.x + data.width / 2,
-    cameraPosition.y,
-    cameraPosition.z + data.height / 2,
+    settings.cameraPosition.x + data.width / 2,
+    settings.cameraPosition.y,
+    settings.cameraPosition.z + data.height / 2,
   );
 
   // Create the camera matrix
@@ -588,38 +634,35 @@ function setupWorldView(gl) {
 }
 
 /*
- * Sets up the user interface (UI) for the camera position.
+ * Sets up the user interface (UI) for the camera and light settings.
  */
 function setupUI() {
   // Create a new GUI instance
   const gui = new GUI();
 
   // Create a folder for the camera position
-  const posFolder = gui.addFolder("Position:");
+  const posFolder = gui.addFolder("Camera Position:");
+  posFolder.add(settings.cameraPosition, "x", -50, 50);
+  posFolder.add(settings.cameraPosition, "y", -50, 50);
+  posFolder.add(settings.cameraPosition, "z", -50, 50);
 
-  // Add a slider for the x-axis
-  posFolder.add(cameraPosition, "x", -50, 50).onChange((value) => {
-    // Update the camera position when the slider value changes
-    cameraPosition.x = value;
-  });
+  // Add controls for the light position
+  const lightFolder = gui.addFolder("Light Position:");
+  lightFolder.add(settings.lightPosition, "x", -50, 50);
+  lightFolder.add(settings.lightPosition, "y", -50, 50);
+  lightFolder.add(settings.lightPosition, "z", -50, 50);
 
-  // Add a slider for the y-axis
-  posFolder.add(cameraPosition, "y", -50, 50).onChange((value) => {
-    // Update the camera position when the slider value changes
-    cameraPosition.y = value;
-  });
-
-  // Add a slider for the z-axis
-  posFolder.add(cameraPosition, "z", -50, 50).onChange((value) => {
-    // Update the camera position when the slider value changes
-    cameraPosition.z = value;
-  });
+  // Add controls for the light colors
+  const lightColorFolder = gui.addFolder("Light Colors:");
+  lightColorFolder.addColor(settings, "ambientLight");
+  lightColorFolder.addColor(settings, "diffuseLight");
+  lightColorFolder.addColor(settings, "specularLight");
 }
 
 // function for sphere
 function generateSphereData(radius, resolution) {
   const positions = [];
-  const indices = [];
+  const normals = [];
 
   // Iterate over latitudes and longitudes
   for (let latNumber = 0; latNumber <= resolution; latNumber++) {
@@ -637,23 +680,13 @@ function generateSphereData(radius, resolution) {
       const z = sinPhi * sinTheta;
 
       positions.push(radius * x, radius * y, radius * z);
-    }
-  }
-
-  // Create indices for triangles
-  for (let latNumber = 0; latNumber < resolution; latNumber++) {
-    for (let longNumber = 0; longNumber < resolution; longNumber++) {
-      const first = latNumber * (resolution + 1) + longNumber;
-      const second = first + resolution + 1;
-
-      indices.push(first, second, first + 1);
-      indices.push(second, second + 1, first + 1);
+      normals.push(x, y, z);
     }
   }
 
   return {
     a_position: { numComponents: 3, data: positions },
-    indices: { numComponents: 3, data: indices },
+    a_normal: { numComponents: 3, data: normals },
   };
 }
 

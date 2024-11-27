@@ -30,7 +30,7 @@ def initModel():
 
     if request.method == 'POST':
         try:
-            numAgents = 1
+            numAgents = 4
             width = int(request.json.get('width'))
             height = int(request.json.get('height'))
             currentStep = 0
