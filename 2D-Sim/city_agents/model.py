@@ -28,7 +28,7 @@ class CityModel(Model):
         self.step_count = 0  # Contador de pasos
 
         # Leer el archivo del mapa
-        with open('../city_files/2023_base.txt') as baseFile:
+        with open('../city_files/2024_base.txt') as baseFile:
             lines = baseFile.readlines()
             self.width = len(lines[0]) - 1
             self.height = len(lines)
@@ -58,7 +58,7 @@ class CityModel(Model):
                         self.graph[cell_pos] = self.get_neighbors(cell_pos, directions, dataDictionary, lines, col)
 
                         # Asignar agentes a las celdas según su tipo
-                        if col in ["v", "^", ">", "<", "I", "i", "O", "o", "A", "a", "Z", "z"]:
+                        if col in ["V", "v", "^", ">", "<", "I", "i", "O", "o", "A", "a", "Z", "z"]:
                             agent = Road(f"r_{r*self.width+c}", self, directions)
                             self.grid.place_agent(agent, cell_pos)
                             self.static_map[cell_pos[1]][cell_pos[0]] = {"type": "Road", "directions": directions}
@@ -100,7 +100,18 @@ class CityModel(Model):
             if not any(isinstance(agent, (Car, Obstacle)) for agent in cell_contents):
                 # Crear y asignar el coche si la celda está libre
                 car = Car(f"car_{self.spawned_agents}", self)
+                if spawn_pos == (0, 0):
+                    car.direction = "Right"
+                elif spawn_pos == (self.width - 1, 0):
+                    car.direction = "Left"   
+                elif spawn_pos == (0, self.height - 1):
+                    car.direction = "Up"
+                elif spawn_pos == (self.width - 1, self.height - 1):
+                    car.direction = "Down"
+
+                print(f"Coche {car.unique_id} dirección inicial: {car.direction}.")
                 self.grid.place_agent(car, spawn_pos)
+            
                 self.schedule.add(car)
                 if self.destinations:
                     car.destination = random.choice(self.destinations)  # Asignar un destino aleatorio

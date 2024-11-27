@@ -13,6 +13,7 @@
     ],
     "#": "Obstacle",
     "v": "Down",
+    "V": "Down",    
     "^": "Up",
     "D": "Destination",
     "I": [
