@@ -9,6 +9,8 @@ class Car(Agent):
         self.path = []  # Ruta calculada
         self.steps_waited = 0  # Contador de pasos esperando
         self.previous_positions = deque(maxlen=5)  # Últimas posiciones visitadas para evitar retrocesos
+        self.direction = None
+        
 
     def bfs_find_shortest_path(self, start, destination):
         """
@@ -52,6 +54,20 @@ class Car(Agent):
             print(f"Coche {self.unique_id} calculó la ruta más corta: {self.path}")
         else:
             print(f"Coche {self.unique_id} no encontró un camino a {destination}.")
+    
+    def update_direction(self, current_pos, next_pos):
+        """
+        Actualiza la dirección del coche basado en el movimiento realizado.
+        """
+        if next_pos[0] > current_pos[0]:
+            self.direction = "right"
+        elif next_pos[0] < current_pos[0]:
+            self.direction = "left"
+        elif next_pos[1] > current_pos[1]:
+            self.direction = "up"
+        elif next_pos[1] < current_pos[1]:
+            self.direction = "down"
+        print(f"Coche {self.unique_id} cambió dirección a {self.direction}.")
 
     def move(self):
         """
@@ -90,7 +106,7 @@ class Car(Agent):
                 self.blocked_steps = 0  # Inicializar atributo
             self.blocked_steps += 1
 
-            if self.blocked_steps >= 3:  # Bloqueado durante 3 pasos consecutivos
+            if self.blocked_steps >= 2:  # Bloqueado durante 3 pasos consecutivos
                 print(f"Coche {self.unique_id} lleva {self.blocked_steps} pasos bloqueado. Buscando cambio de carril.")
                 self.blocked_steps = 0  # Reiniciar el contador tras cambio de carril
 
@@ -128,6 +144,7 @@ class Car(Agent):
 
         # Mover al coche al siguiente nodo
         print(f"Coche {self.unique_id} avanzando de {self.pos} al nodo {next_node}.")
+        self.update_direction(self.pos, next_node)
         self.model.grid.move_agent(self, next_node)
         self.pos = next_node  # Actualizar la posición actual
         self.path.pop(0)  # Eliminar el nodo visitado de la ruta
@@ -205,3 +222,6 @@ class Road(Agent):
 
     def step(self):
         pass
+
+class Zepeling(Agent):
+    pass
