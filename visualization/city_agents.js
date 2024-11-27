@@ -27,7 +27,7 @@ import fsGLSL from "../assets/shaders/fs_phong.glsl?raw";
 const settings = {
   cameraPosition: {
     x: 0,
-    y: 9,
+    y: 35,
     z: 9,
   },
   lightPosition: {
@@ -111,6 +111,7 @@ const obstacles = [];
 const trafficLights = [];
 const destinations = [];
 const roads = [];
+const dynamycTrafficLights = [];
 
 // Initialize WebGL-related variables
 let gl,
@@ -561,7 +562,7 @@ async function drawScene() {
 
   frameCount++;
 
-  if (frameCount % 10 == 0) {
+  if (frameCount % 5 == 0) {
     frameCount = 0;
     await update();
   }
@@ -682,37 +683,6 @@ function setupUI() {
   lightColorFolder.addColor(settings, "ambientLight");
   lightColorFolder.addColor(settings, "diffuseLight");
   lightColorFolder.addColor(settings, "specularLight");
-}
-
-// function for sphere
-function generateSphereData(radius, resolution) {
-  const positions = [];
-  const normals = [];
-
-  // Iterate over latitudes and longitudes
-  for (let latNumber = 0; latNumber <= resolution; latNumber++) {
-    const theta = (latNumber * Math.PI) / resolution; // Latitude angle
-    const sinTheta = Math.sin(theta);
-    const cosTheta = Math.cos(theta);
-
-    for (let longNumber = 0; longNumber <= resolution; longNumber++) {
-      const phi = (longNumber * 2 * Math.PI) / resolution; // Longitude angle
-      const sinPhi = Math.sin(phi);
-      const cosPhi = Math.cos(phi);
-
-      const x = cosPhi * sinTheta;
-      const y = cosTheta;
-      const z = sinPhi * sinTheta;
-
-      positions.push(radius * x, radius * y, radius * z);
-      normals.push(x, y, z);
-    }
-  }
-
-  return {
-    a_position: { numComponents: 3, data: positions },
-    a_normal: { numComponents: 3, data: normals },
-  };
 }
 
 main();
