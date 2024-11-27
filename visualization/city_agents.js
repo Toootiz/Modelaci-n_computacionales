@@ -16,6 +16,8 @@ import deLoreanMtl from "../assets/texturedDelorean.mtl?raw";
 import buildingObj from "../assets/building.obj?raw";
 import buildingMtl from "../assets/building.mtl?raw";
 
+import cubeObj from "../assets/cube.obj?raw";
+
 // import fsGLSL from "../assets/shaders/fs_phong.glsl?raw";
 // import vsGLSL from "../assets/shaders/vs_phong.glsl?raw";
 
@@ -153,8 +155,8 @@ async function main() {
   const agentArrays = loadObj(deLoreanObj);
   const obstacleArrays = loadObj(buildingObj);
   const lightArrays = generateSphereData(0.5, 60);
-  const destinationArrays = generateCubeData(1);
-  const roadArrays = generateCubeData(1);
+  const destinationArrays = loadObj(cubeObj);
+  const roadArrays = loadObj(cubeObj);
 
   // Create buffer information from the data
   agentsBufferInfo = twgl.createBufferInfoFromArrays(gl, agentArrays);
@@ -609,75 +611,6 @@ function setupUI() {
     // Update the camera position when the slider value changes
     cameraPosition.z = value;
   });
-}
-
-/*
- * Generates cube data for creating buffers.
- */
-function generateCubeData(size) {
-  let positions = [
-    // Front Face
-    -0.5, -0.5, 0.5, 0.5, -0.5, 0.5, 0.5, 0.5, 0.5, -0.5, 0.5, 0.5,
-
-    // Back face
-    -0.5, -0.5, -0.5, -0.5, 0.5, -0.5, 0.5, 0.5, -0.5, 0.5, -0.5, -0.5,
-
-    // Top face
-    -0.5, 0.5, -0.5, -0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, -0.5,
-
-    // Bottom face
-    -0.5, -0.5, -0.5, 0.5, -0.5, -0.5, 0.5, -0.5, 0.5, -0.5, -0.5, 0.5,
-
-    // Right face
-    0.5, -0.5, -0.5, 0.5, 0.5, -0.5, 0.5, 0.5, 0.5, 0.5, -0.5, 0.5,
-
-    // Left face
-    -0.5, -0.5, -0.5, -0.5, -0.5, 0.5, -0.5, 0.5, 0.5, -0.5, 0.5, -0.5,
-  ].map((e) => size * e);
-
-  let indices = [
-    0,
-    1,
-    2,
-    0,
-    2,
-    3, // Front face
-    4,
-    5,
-    6,
-    4,
-    6,
-    7, // Back face
-    8,
-    9,
-    10,
-    8,
-    10,
-    11, // Top face
-    12,
-    13,
-    14,
-    12,
-    14,
-    15, // Bottom face
-    16,
-    17,
-    18,
-    16,
-    18,
-    19, // Right face
-    20,
-    21,
-    22,
-    20,
-    22,
-    23, // Left face
-  ];
-
-  return {
-    a_position: { numComponents: 3, data: positions },
-    indices: { numComponents: 3, data: indices },
-  };
 }
 
 // function for sphere
