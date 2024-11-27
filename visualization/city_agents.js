@@ -10,6 +10,12 @@
 import * as twgl from "twgl.js";
 import GUI from "lil-gui";
 
+import deLoreanObj from "../assets/texturedDelorean.obj?raw";
+import deLoreanMtl from "../assets/texturedDelorean.mtl?raw";
+
+import buildingObj from "../assets/building.obj?raw";
+import buildingMtl from "../assets/building.mtl?raw";
+
 // Define the vertex shader code, using GLSL 3.00
 const vsGLSL = `#version 300 es
 in vec4 a_position;
@@ -37,6 +43,45 @@ void main() {
   outColor = v_color;
 }
 `;
+
+// carga los datos del obj a json
+function loadObj(data) {
+  const lines = data.split("\n");
+  // lines are splite per backspace (por cada vertice, cara, color o normal)
+  const pos = [[0, 0, 0]];
+  const normals = [[0, 0, 0]];
+  const colors = [];
+  const a_position = [];
+  const a_normal = [];
+
+  lines.forEach((line) => {
+    const parts = line.trim().split(/\s+/);
+    const type = parts[0];
+
+    if (type == "v") {
+      // vertices
+      pos.push(parts.slice(1).map(parseFloat));
+    } else if (type == "vn") {
+      // normales
+      normals.push(parts.slice(1).map(parseFloat));
+    } else if (type == "f") {
+      // caras
+      for (let part of parts.slice(1)) {
+        const indices = part.split("/").map((n) => parseInt(n, 10));
+        a_position.push(...pos[indices[0]]);
+        a_normal.push(...normals[indices[2]]);
+      }
+    } else {
+      return;
+    }
+  });
+
+  return {
+    // setea los parametros
+    a_position: { numComponents: 3, data: a_position },
+    a_normal: { numComponents: 3, data: a_normal },
+  };
+}
 
 // Define the Object3D class to represent 3D objects
 class Object3D {
@@ -102,9 +147,9 @@ async function main() {
   programInfo = twgl.createProgramInfo(gl, [vsGLSL, fsGLSL]);
 
   // Generate the data for the different objects
-  const agentArrays = generateCubeData(1);
-  const obstacleArrays = generateCubeData(1);
-  const lightArrays = generateCubeData(1);
+  const agentArrays = loadObj(deLoreanObj);
+  const obstacleArrays = loadObj(buildingObj);
+  const lightArrays = generateSphereData(0.5, 60);
   const destinationArrays = generateCubeData(1);
   const roadArrays = generateCubeData(1);
 
@@ -198,9 +243,9 @@ async function getAgents() {
             agent.id,
             [agent.x, agent.y, agent.z],
             [0, 0, 0],
-            [1, 1, 1],
-            [1, 1, 1, 1],
-          ); // white color
+            [0.6, 0.8, 0.6],
+            [1, 0, 1, 1],
+          );
           agents.push(newAgent);
         }
         // Log the agents array
@@ -245,8 +290,8 @@ async function getObstacles() {
           obstacle.id,
           [obstacle.x, obstacle.y, obstacle.z],
           [0, 0, 0],
-          [1, 1, 1],
-          [0.5, 0.5, 0.5, 1],
+          [0.8, 1, 0.8],
+          [0.5, 0.5, 0.8, 1],
         ); // Gray color
         obstacles.push(newObstacle);
       }
@@ -283,10 +328,20 @@ async function getLights() {
             light.id,
             [light.x, light.y, light.z],
             [0, 0, 0],
-            [1, 1, 1],
+            [0.5, 0.5, 0.5],
             light.state ? [0, 1, 0, 1] : [1, 0, 0, 1], // Green if true, red if false
           );
           trafficLights.push(newLight);
+
+          // create a road under the light
+          const newRoad = new Object3D(
+            light.id,
+            [light.x, light.y - 1.001, light.z],
+            [0, 0, 0],
+            [1, 0.2, 1],
+            [0.3, 0.3, 0.3, 1],
+          ); // Dark gray color
+          roads.push(newRoad);
         }
         // Log the traffic lights array
         console.log("Traffic Lights:", trafficLights);
@@ -331,7 +386,7 @@ async function getDestinations() {
           dest.id,
           [dest.x, dest.y, dest.z],
           [0, 0, 0],
-          [1, 1, 1],
+          [1, 0.2, 1],
           [0, 0, 1, 1],
         ); // Blue color
         destinations.push(newDestination);
@@ -364,7 +419,7 @@ async function getRoads() {
           road.id,
           [road.x, road.y, road.z],
           [0, 0, 0],
-          [1, 1, 1],
+          [1, 0.2, 1],
           [0.3, 0.3, 0.3, 1],
         ); // Dark gray color
         roads.push(newRoad);
@@ -615,6 +670,47 @@ function generateCubeData(size) {
     22,
     23, // Left face
   ];
+
+  return {
+    a_position: { numComponents: 3, data: positions },
+    indices: { numComponents: 3, data: indices },
+  };
+}
+
+// function for sphere
+function generateSphereData(radius, resolution) {
+  const positions = [];
+  const indices = [];
+
+  // Iterate over latitudes and longitudes
+  for (let latNumber = 0; latNumber <= resolution; latNumber++) {
+    const theta = (latNumber * Math.PI) / resolution; // Latitude angle
+    const sinTheta = Math.sin(theta);
+    const cosTheta = Math.cos(theta);
+
+    for (let longNumber = 0; longNumber <= resolution; longNumber++) {
+      const phi = (longNumber * 2 * Math.PI) / resolution; // Longitude angle
+      const sinPhi = Math.sin(phi);
+      const cosPhi = Math.cos(phi);
+
+      const x = cosPhi * sinTheta;
+      const y = cosTheta;
+      const z = sinPhi * sinTheta;
+
+      positions.push(radius * x, radius * y, radius * z);
+    }
+  }
+
+  // Create indices for triangles
+  for (let latNumber = 0; latNumber < resolution; latNumber++) {
+    for (let longNumber = 0; longNumber < resolution; longNumber++) {
+      const first = latNumber * (resolution + 1) + longNumber;
+      const second = first + resolution + 1;
+
+      indices.push(first, second, first + 1);
+      indices.push(second, second + 1, first + 1);
+    }
+  }
 
   return {
     a_position: { numComponents: 3, data: positions },
