@@ -257,14 +257,22 @@ async function getAgents() {
         }
 
         if (!existingAgent) {
+          // Generar un color aleatorio para el nuevo agente
+          const randomColor = [
+            Math.random(),
+            Math.random(),
+            Math.random(),
+            1, // Alpha value
+          ];
+
           // Crear un nuevo agente y agregarlo al array
           const newAgent = new Object3D(
             agent.id,
             [agent.x, agent.y, agent.z],
             rotation,
-            [0.6, 0.8, 0.6],
+            [0.6, 0.8, 0.4],
             [0.1, 0.1, 0.1, 1], // ambientColor
-            [0.7, 0.3, 0.85, 1], // diffuseColor
+            randomColor, // diffuseColor (color aleatorio)
             [1.0, 1.0, 1.0, 1], // specularColor
             50, // shininess
           );
@@ -273,6 +281,7 @@ async function getAgents() {
           // Actualizar la posición y rotación del agente existente
           existingAgent.position = [agent.x, agent.y, agent.z];
           existingAgent.rotation = rotation;
+          // No cambiar los colores de los agentes existentes
         }
       }
 
@@ -552,7 +561,7 @@ async function drawScene() {
 
   frameCount++;
 
-  if (frameCount % 30 == 0) {
+  if (frameCount % 10 == 0) {
     frameCount = 0;
     await update();
   }
