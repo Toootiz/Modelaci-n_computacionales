@@ -9,13 +9,13 @@ vv<<<<OO#^^<<<<OOs<<<<I^
 vv####vv#^^####vv#####^^
 voD###vv#^^####vv####DI^
 vv###DOv#^iD###voD####^^
-ss####vv#i^####vv#####^^
+SS####vv#i^####vv#####^^
 vvs<<<O<<II<<<<OO<<<<<II
 vvs<<<O<<<I<<<<OO<<<<<I^
 vv###vv###^^##########^^
 vo>>>>o>>>Z>>>>>a>>>>s^^
 oo>>>>o>>>Z>>>>aa>>a>s^^
-vv####vv#^^####vv##D##ss
+vv####vv#^^####vv##D##SS
 voD###vv#^iD###vv#####^^
 vv####vv#^^####vv<<<<<II
 vv###DOv#^^####vv#####^I
