@@ -110,7 +110,7 @@ class Object3D {
 const agent_server_uri = "http://localhost:8585/";
 
 // Initialize arrays to store agents and other objects
-const agents = [];
+let agents = [];
 const obstacles = [];
 const trafficLights = [];
 const destinations = [];
@@ -240,10 +240,20 @@ async function getAgents() {
       // Log the agent positions
       console.log(result.positions);
 
-      // Check if the agents array is empty
-      if (agents.length == 0) {
-        // Create new agents and add them to the agents array
-        for (const agent of result.positions) {
+      // Track the received agent IDs
+      const receivedIds = result.positions.map((agent) => agent.id);
+
+      // Remove agents that are no longer in the response
+      agents = agents.filter((object3d) => receivedIds.includes(object3d.id));
+
+      // Add new agents or update existing ones
+      for (const agent of result.positions) {
+        const existingAgent = agents.find(
+          (object3d) => object3d.id === agent.id,
+        );
+
+        if (!existingAgent) {
+          // Create a new agent and add it to the array
           const newAgent = new Object3D(
             agent.id,
             [agent.x, agent.y, agent.z],
@@ -252,27 +262,20 @@ async function getAgents() {
             [1, 0, 1, 1],
           );
           agents.push(newAgent);
-        }
-        // Log the agents array
-        console.log("Agents:", agents);
-      } else {
-        // Update the positions of existing agents
-        for (const agent of result.positions) {
-          const current_agent = agents.find(
-            (object3d) => object3d.id == agent.id,
-          );
-
-          // Check if the agent exists in the agents array
-          if (current_agent != undefined) {
-            // Update the agent's position
-            current_agent.position = [agent.x, agent.y, agent.z];
-          }
+        } else {
+          // Update the existing agent's position
+          existingAgent.position = [agent.x, agent.y, agent.z];
         }
       }
+
+      // Log the updated agents array
+      console.log("Agents:", agents);
+    } else {
+      console.error("Failed to fetch agents:", response.statusText);
     }
   } catch (error) {
     // Log any errors that occur during the request
-    console.log(error);
+    console.error("Error fetching agents:", error);
   }
 }
 
