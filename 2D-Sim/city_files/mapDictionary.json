@@ -1,12 +1,12 @@
 {
-    ">" : "Right",
-    "<" : "Left",
-    "S" : 15,
-    "s" : 7,
-    "#" : "Obstacle",
-    "v" : "Down",
-    "^" : "Up",
-    "D" : "Destination",
+    ">": "Right",
+    "<": "Left",
+    "S": [335, "Up", "Down"],
+    "s": [335, "Right", "Left"],
+    "#": "Obstacle",
+    "v": "Down",
+    "^": "Up",
+    "D": "Destination",
     "I": ["Up", "Left"],
     "i": ["Up", "Right"],
     "O": ["Down", "Left"],
@@ -14,5 +14,5 @@
     "A": ["Left", "Down"],
     "a": ["Right", "Down"],
     "Z": ["Right", "Up"],
-    "z": ["Right", "Down"]
+    "z": ["Left", "Up"]
 }
