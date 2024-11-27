@@ -3,7 +3,7 @@ vv<<A<AA<<<s<A<AA<<<<<<^
 vv##D#vv#SS##D#vv#####^^
 vv####vv#^^####vv#####^^
 vv####vv#^iD###vv####DI^
-vv#D##vv#i^####SS#####^^
+vv#D##vv#^^####SS#####^^
 vv<z<<OO#^^<<<<Ovs<<<<II
 vv<<<<OO#^^<<<<OOs<<<<I^
 vv####vv#^^####vv#####^^
