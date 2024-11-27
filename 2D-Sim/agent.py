@@ -1,182 +1,151 @@
 from mesa import Agent
+from collections import deque
+
 class Car(Agent):
-    """
-    Agent that moves following the direction of the Road it is currently on, respects traffic lights,
-    and evaluates surroundings and upcoming cells.
-    """
     def __init__(self, unique_id, model):
         super().__init__(unique_id, model)
         self.map_knowledge = model.static_map  # Copia del mapa estático
-        self.previous_direction = None  # Dirección de la celda anterior
+        self.destination = None  # Destino del coche
+        self.path = []  # Ruta calculada
+        self.steps_waited = 0  # Contador de pasos esperando
+        self.previous_positions = deque(maxlen=5)  # Últimas posiciones visitadas para evitar retrocesos
 
-    def get_surroundings(self, position):
+    def bfs_find_shortest_path(self, start, destination):
         """
-        Get the contents of the cells around the car (Moore neighborhood).
+        Realiza BFS para encontrar la ruta más corta desde el inicio hasta el destino en el grafo.
         """
-        neighborhood = self.model.grid.get_neighborhood(
-            position,
-            moore=True,  # Considera las 8 celdas alrededor
-            include_center=False  # Excluye la celda actual
-        )
-        surroundings = {}
-        for cell_pos in neighborhood:
-            if 0 <= cell_pos[0] < self.model.width and 0 <= cell_pos[1] < self.model.height:
-                cell_contents = self.model.grid.get_cell_list_contents(cell_pos)
-                surroundings[cell_pos] = cell_contents
-        return surroundings
+        visited = set()
+        queue = deque()
+        queue.append((start, [start]))
 
-    def get_next_cells(self, position, direction, steps=3):
+        while queue:
+            current_node, path = queue.popleft()
+
+            if current_node == destination:
+                return path
+
+            visited.add(current_node)
+
+            neighbors = self.model.graph.get(current_node, [])
+            for neighbor in neighbors:
+                if neighbor not in visited:
+                    visited.add(neighbor)
+                    queue.append((neighbor, path + [neighbor]))
+
+        return None
+
+    def calculate_path(self):
         """
-        Get the next 'steps' cells in the given direction.
+        Calcula la ruta más corta al destino usando BFS.
         """
-        x, y = position
-        cells = []
+        if not self.destination:
+            print(f"Coche {self.unique_id} no tiene destino asignado.")
+            return
 
-        for _ in range(steps):
-            if direction == "Right":
-                x += 1
-            elif direction == "Left":
-                x -= 1
-            elif direction == "Up":
-                y += 1
-            elif direction == "Down":
-                y -= 1
+        start = self.pos
+        destination = self.destination
+        print(f"Coche {self.unique_id} buscando la ruta más corta de {start} a {destination} usando BFS.")
 
-            # Verificar si está dentro de los límites del mapa
-            if 0 <= x < self.model.width and 0 <= y < self.model.height:
-                cell_contents = self.model.grid.get_cell_list_contents((x, y))
-                cells.append({"position": (x, y), "contents": cell_contents})
-            else:
-                break  # Salir si está fuera del mapa
+        self.path = self.bfs_find_shortest_path(start, destination)
 
-        return cells
+        if self.path:
+            print(f"Coche {self.unique_id} calculó la ruta más corta: {self.path}")
+        else:
+            print(f"Coche {self.unique_id} no encontró un camino a {destination}.")
 
     def move(self):
         """
-        Moves the car, handling intersections, traffic lights, and regular roads.
+        Move the car along the calculated path, respecting the graph's nodes and avoiding collisions.
+        If blocked for 3 steps, checks lateral positions for a possible lane change.
         """
-        # Obtener la posición actual
-        x, y = self.pos
-        current_cell = self.map_knowledge[y][x]
+        # Verificar si ya llegó al destino
+        if self.pos == self.destination:
+            print(f"Coche {self.unique_id} ha llegado a su destino en {self.pos}.")
+            self.model.grid.remove_agent(self)  # Eliminar el coche del grid
+            self.model.schedule.remove(self)  # Eliminar el coche del schedule
+            return
 
-        # Verificar si la celda actual es válida
-        if not current_cell:
-            return  # No hacer nada si la celda actual no es válida
+        # Si no hay una ruta calculada o está vacía, calcularla
+        if not self.path or len(self.path) <= 1:
+            self.calculate_path()
+            if not self.path or len(self.path) <= 1:  # Si no hay ruta o ya está en el destino, detenerse
+                print(f"Coche {self.unique_id} no tiene una ruta válida o ya está en el destino.")
+                return
 
-        # Verificar si hay un semáforo delante
-        current_cell_contents = self.model.grid.get_cell_list_contents(self.pos)
-        traffic_light = next((agent for agent in current_cell_contents if isinstance(agent, Traffic_Light)), None)
+        # Determinar el siguiente nodo en la ruta
+        next_node = self.path[1]  # El siguiente nodo es el segundo en la lista (el primero es la posición actual)
+        print(f"Coche {self.unique_id} evaluando movimiento al nodo {next_node} desde {self.pos}.")
 
-        # Si el coche está frente a un semáforo
-        if not traffic_light:
-            # Verificar si hay un semáforo en la siguiente celda en la dirección actual
-            if self.previous_direction == "Right":
-                next_position = (x + 1, y)
-            elif self.previous_direction == "Left":
-                next_position = (x - 1, y)
-            elif self.previous_direction == "Up":
-                next_position = (x, y + 1)
-            elif self.previous_direction == "Down":
-                next_position = (x, y - 1)
-            else:
-                next_position = None
+        # Verificar el contenido del nodo siguiente
+        cell_contents = self.model.grid.get_cell_list_contents(next_node)
+        print(f"Coche {self.unique_id}: nodo {next_node} contiene {[type(agent).__name__ for agent in cell_contents]}")
 
-            if next_position:
-                nx, ny = next_position
-                if 0 <= nx < self.model.width and 0 <= ny < self.model.height:
-                    # Obtener contenido de la siguiente celda
-                    cell_contents = self.model.grid.get_cell_list_contents(next_position)
-                    next_traffic_light = next((agent for agent in cell_contents if isinstance(agent, Traffic_Light)), None)
+        # Verificar si hay un coche en el siguiente nodo
+        other_car = next((agent for agent in cell_contents if isinstance(agent, Car)), None)
+        if other_car:
+            print(f"Coche {self.unique_id} detectó un coche bloqueando el nodo {next_node}. Evaluando cambio de carril.")
 
-                    # Si hay un semáforo en la siguiente celda
-                    if next_traffic_light:
-                        if not next_traffic_light.state:  # Semáforo en rojo
-                            print(f"Coche {self.unique_id} se detuvo frente al semáforo en {next_position}.")
+            # Incrementar contador de pasos bloqueado
+            if not hasattr(self, "blocked_steps"):
+                self.blocked_steps = 0  # Inicializar atributo
+            self.blocked_steps += 1
+
+            if self.blocked_steps >= 3:  # Bloqueado durante 3 pasos consecutivos
+                print(f"Coche {self.unique_id} lleva {self.blocked_steps} pasos bloqueado. Buscando cambio de carril.")
+                self.blocked_steps = 0  # Reiniciar el contador tras cambio de carril
+
+                # Determinar vecinos laterales
+                next_x, next_y = next_node
+                lateral_moves = [
+                    (next_x, next_y + 1),  # Arriba
+                    (next_x, next_y - 1),  # Abajo
+                    (next_x + 1, next_y),  # Derecha
+                    (next_x - 1, next_y)   # Izquierda
+                ]
+
+                # Validar cada vecino lateral
+                for lateral in lateral_moves:
+                    if 0 <= lateral[0] < self.model.width and 0 <= lateral[1] < self.model.height:  # Dentro del mapa
+                        lateral_contents = self.model.grid.get_cell_list_contents(lateral)
+                        if not any(isinstance(agent, (Car, Obstacle, Destination, Traffic_Light)) for agent in lateral_contents):
+                            print(f"Coche {self.unique_id} cambia al carril {lateral}.")
+                            self.model.grid.move_agent(self, lateral)
+                            self.calculate_path()  # Recalcular la ruta desde la nueva posición
                             return
-                        else:
-                            # Semáforo en verde: avanzar al semáforo
-                            print(f"Coche {self.unique_id} avanzó al semáforo en {next_position}.")
-                            self.model.grid.move_agent(self, next_position)
-                            return
 
-        # Si el coche está en un semáforo
-        if traffic_light:
-            if not traffic_light.state:  # Semáforo en rojo
-                print(f"Coche {self.unique_id} se detuvo en el semáforo en {self.pos}.")
-                return  # No avanzar si el semáforo está en rojo
-            else:
-                # Semáforo en verde: avanzar usando la dirección previa
-                current_direction = self.previous_direction
-        elif current_cell["type"] == "Intersection":
-            # Si está en una intersección, tomar la primera dirección disponible
-            directions = current_cell["directions"]
-            current_direction = directions[0]  # Elegir la primera dirección
-            print(f"Intersección detectada en {self.pos}. Direcciones disponibles: {directions}. Usando: {current_direction}")
-            self.previous_direction = current_direction  # Actualizar la dirección previa
-        else:
-            # Si no está en un semáforo o intersección, tomar la dirección de la calle
-            if not current_cell or current_cell["type"] != "Road":
-                return  # No hacer nada si no está en una calle
-            current_direction = current_cell["direction"]
-            self.previous_direction = current_direction  # Actualizar la dirección anterior
+            print(f"Coche {self.unique_id} no pudo cambiar de carril. Se detiene temporalmente.")
+            return
 
-        # Obtener las celdas alrededor del coche (para debug o lógica futura)
-        surroundings = self.get_surroundings(self.pos)
-        print(f"Alrededor de {self.pos}: {[(pos, [type(a).__name__ for a in agents]) for pos, agents in surroundings.items()]}")
+        # Si no está bloqueado, reiniciar el contador de pasos bloqueado
+        if hasattr(self, "blocked_steps"):
+            self.blocked_steps = 0
 
-        # Calcular la posición candidata basada en la dirección actual
-        next_position = None
-        if current_direction == "Right":
-            next_position = (x + 1, y)
-        elif current_direction == "Left":
-            next_position = (x - 1, y)
-        elif current_direction == "Up":
-            next_position = (x, y + 1)
-        elif current_direction == "Down":
-            next_position = (x, y - 1)
+        # Verificar semáforo en el siguiente nodo
+        traffic_light = next((agent for agent in cell_contents if isinstance(agent, Traffic_Light)), None)
+        if traffic_light and not traffic_light.state:  # Semáforo en rojo
+            print(f"Coche {self.unique_id} se detuvo frente al semáforo en el nodo {next_node}.")
+            return
 
-        # Verificar si la nueva posición es válida
-        if next_position:
-            nx, ny = next_position
-            if 0 <= nx < self.model.width and 0 <= ny < self.model.height:
-                # Obtener contenido de la nueva posición
-                cell_contents = self.model.grid.get_cell_list_contents(next_position)
-
-                # Verificar si hay un semáforo en la nueva posición
-                next_traffic_light = next((agent for agent in cell_contents if isinstance(agent, Traffic_Light)), None)
-                if next_traffic_light and not next_traffic_light.state:  # Semáforo en rojo
-                    print(f"Semáforo rojo detectado en {next_position}. Deteniéndose.")
-                    return  # No moverse si el semáforo está en rojo
-
-                # Verificar si hay un destino en la nueva posición
-                if any(isinstance(agent, Destination) for agent in cell_contents):
-                    self.model.grid.move_agent(self, next_position)
-                    print(f"Coche {self.unique_id} ha alcanzado su destino en {next_position}.")
-                    return  # Detenerse al llegar al destino
-
-                # Moverse a la nueva posición si contiene una calle
-                if any(isinstance(agent, Road) for agent in cell_contents):
-                    self.model.grid.move_agent(self, next_position)
-                    print(f"Coche {self.unique_id} avanzó a {next_position} siguiendo la dirección {current_direction}.")
-                    return  # Detener el movimiento después de avanzar
-
+        # Mover al coche al siguiente nodo
+        print(f"Coche {self.unique_id} avanzando de {self.pos} al nodo {next_node}.")
+        self.model.grid.move_agent(self, next_node)
+        self.pos = next_node  # Actualizar la posición actual
+        self.path.pop(0)  # Eliminar el nodo visitado de la ruta
 
 
 
     def step(self):
         """
-        Determines the movement of the car for the current step.
+        Determina el movimiento del coche en el paso actual.
         """
         self.move()
-
-
 
 
 class Traffic_Light(Agent):
     """
     Traffic light. Where the traffic lights are in the grid.
     """
-    def __init__(self, unique_id, model, state = False, timeToChange = 10):
+    def __init__(self, unique_id, model, state=False, timeToChange=10):
         super().__init__(unique_id, model)
         """
         Creates a new Traffic light.
@@ -184,17 +153,18 @@ class Traffic_Light(Agent):
             unique_id: The agent's ID
             model: Model reference for the agent
             state: Whether the traffic light is green or red
-            timeToChange: After how many step should the traffic light change color 
+            timeToChange: After how many steps the traffic light changes color 
         """
         self.state = state
         self.timeToChange = timeToChange
 
     def step(self):
         """ 
-        To change the state (green or red) of the traffic light in case you consider the time to change of each traffic light.
+        Change the state (green or red) of the traffic light based on the time to change.
         """
         if self.model.schedule.steps % self.timeToChange == 0:
             self.state = not self.state
+
 
 class Destination(Agent):
     """
@@ -206,6 +176,7 @@ class Destination(Agent):
     def step(self):
         pass
 
+
 class Obstacle(Agent):
     """
     Obstacle agent. Just to add obstacles to the grid.
@@ -216,11 +187,12 @@ class Obstacle(Agent):
     def step(self):
         pass
 
+
 class Road(Agent):
     """
     Road agent. Determines where the cars can move, and in which direction.
     """
-    def __init__(self, unique_id, model, direction= "Left"):
+    def __init__(self, unique_id, model, direction="Left"):
         """
         Creates a new road.
         Args:
