@@ -16,6 +16,9 @@ import deLoreanMtl from "../assets/texturedDelorean.mtl?raw";
 import buildingObj from "../assets/building.obj?raw";
 import buildingMtl from "../assets/building.mtl?raw";
 
+// import fsGLSL from "../assets/shaders/fs_phong.glsl?raw";
+// import vsGLSL from "../assets/shaders/vs_phong.glsl?raw";
+
 // Define the vertex shader code, using GLSL 3.00
 const vsGLSL = `#version 300 es
 in vec4 a_position;
