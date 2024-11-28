@@ -43,7 +43,8 @@ class Car(Agent):
 
     def calculate_path(self, avoid_node=None):
         """
-        Calcula la ruta más corta al destino usando BFS.
+        Calcula la rut
+        a más corta al destino usando BFS.
         Si avoid_node está definido, evita ese nodo durante el cálculo.
         """
         if not self.destination:
