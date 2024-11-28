@@ -501,7 +501,21 @@ async function getRoads() {
           400, // shininess
         ); // Dark gray color
         roads.push(newRoad);
+
+        // instantiate a small white dot in the middle of the road
+        const newRoadDot = new Object3D(
+          road.id,
+          [road.x, road.y + 0.001, road.z],
+          [0, 0, 0],
+          [0.1, 0.3, 0.1],
+          [0.1, 0.1, 0.1, 1], // ambientColor
+          [1, 1, 1, 1], // diffuseColor
+          [1, 1, 1, 1], // specularColor
+          100, // shininess
+        ); // White color
+        roads.push(newRoadDot);
       }
+
       // Log the roads array
       console.log("Roads:", roads);
       // console.log("Response", result.positions);
