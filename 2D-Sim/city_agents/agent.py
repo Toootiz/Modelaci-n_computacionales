@@ -4,17 +4,19 @@ from collections import deque
 class Car(Agent):
     def __init__(self, unique_id, model):
         super().__init__(unique_id, model)
-        self.map_knowledge = model.static_map  # Copia del mapa estático
-        self.destination = None  # Destino del coche
-        self.path = []  # Ruta calculada
+        self.map_knowledge = model.static_map
+        self.destination = None
+        self.path = []
         self.steps_waited = 0  # Contador de pasos esperando
         self.previous_positions = deque(maxlen=5)  # Últimas posiciones visitadas para evitar retrocesos
         self.direction = None
-        
+        self.inactive_steps = 0  # Contador de pasos inactivos
+        self.blocked_node = None  # Nodo que se debe evitar
 
-    def bfs_find_shortest_path(self, start, destination):
+    def bfs_find_shortest_path(self, start, destination, avoid_node=None):
         """
         Realiza BFS para encontrar la ruta más corta desde el inicio hasta el destino en el grafo.
+        Permite evitar un nodo específico si está definido.
         """
         visited = set()
         queue = deque()
@@ -30,15 +32,16 @@ class Car(Agent):
 
             neighbors = self.model.graph.get(current_node, [])
             for neighbor in neighbors:
-                if neighbor not in visited:
+                if neighbor not in visited and neighbor != avoid_node:
                     visited.add(neighbor)
                     queue.append((neighbor, path + [neighbor]))
 
         return None
 
-    def calculate_path(self):
+    def calculate_path(self, avoid_node=None):
         """
         Calcula la ruta más corta al destino usando BFS.
+        Si avoid_node está definido, evita ese nodo durante el cálculo.
         """
         if not self.destination:
             print(f"Coche {self.unique_id} no tiene destino asignado.")
@@ -46,15 +49,15 @@ class Car(Agent):
 
         start = self.pos
         destination = self.destination
-        print(f"Coche {self.unique_id} buscando la ruta más corta de {start} a {destination} usando BFS.")
+        print(f"Coche {self.unique_id} buscando la ruta más corta de {start} a {destination}, evitando {avoid_node}.")
 
-        self.path = self.bfs_find_shortest_path(start, destination)
+        self.path = self.bfs_find_shortest_path(start, destination, avoid_node)
 
         if self.path:
             print(f"Coche {self.unique_id} calculó la ruta más corta: {self.path}")
         else:
             print(f"Coche {self.unique_id} no encontró un camino a {destination}.")
-    
+
     def update_direction(self, current_pos, next_pos):
         """
         Actualiza la dirección del coche basado en el movimiento realizado.
@@ -71,46 +74,34 @@ class Car(Agent):
 
     def move(self):
         """
-        Move the car along the calculated path, respecting the graph's nodes and avoiding collisions.
-        If blocked for 3 steps, checks lateral positions for a possible lane change.
+        Mueve el coche según su ruta calculada.
+        Si está bloqueado por 2 pasos consecutivos, intenta cambiar de carril.
+        Si está bloqueado por 10 pasos, recalcula una ruta alternativa evitando el nodo bloqueado.
         """
-        # Verificar si ya llegó al destino
         if self.pos == self.destination:
             print(f"Coche {self.unique_id} ha llegado a su destino en {self.pos}.")
-            self.model.grid.remove_agent(self)  # Eliminar el coche del grid
-            self.model.schedule.remove(self)  # Eliminar el coche del schedule
+            self.model.grid.remove_agent(self)
+            self.model.schedule.remove(self)
             return
 
-        # Si no hay una ruta calculada o está vacía, calcularla
         if not self.path or len(self.path) <= 1:
             self.calculate_path()
-            if not self.path or len(self.path) <= 1:  # Si no hay ruta o ya está en el destino, detenerse
+            if not self.path or len(self.path) <= 1:
                 print(f"Coche {self.unique_id} no tiene una ruta válida o ya está en el destino.")
                 return
 
-        # Determinar el siguiente nodo en la ruta
-        next_node = self.path[1]  # El siguiente nodo es el segundo en la lista (el primero es la posición actual)
-        print(f"Coche {self.unique_id} evaluando movimiento al nodo {next_node} desde {self.pos}.")
-
-        # Verificar el contenido del nodo siguiente
+        next_node = self.path[1]
         cell_contents = self.model.grid.get_cell_list_contents(next_node)
         print(f"Coche {self.unique_id}: nodo {next_node} contiene {[type(agent).__name__ for agent in cell_contents]}")
 
-        # Verificar si hay un coche en el siguiente nodo
         other_car = next((agent for agent in cell_contents if isinstance(agent, Car)), None)
         if other_car:
             print(f"Coche {self.unique_id} detectó un coche bloqueando el nodo {next_node}. Evaluando cambio de carril.")
+            self.inactive_steps += 1
 
-            # Incrementar contador de pasos bloqueado
-            if not hasattr(self, "blocked_steps"):
-                self.blocked_steps = 0  # Inicializar atributo
-            self.blocked_steps += 1
-
-            if self.blocked_steps >= 2:  # Bloqueado durante 3 pasos consecutivos
-                print(f"Coche {self.unique_id} lleva {self.blocked_steps} pasos bloqueado. Buscando cambio de carril.")
-                self.blocked_steps = 0  # Reiniciar el contador tras cambio de carril
-
-                # Determinar vecinos laterales
+            # Intentar cambio de carril tras 2 pasos bloqueados
+            if self.inactive_steps >= 2:
+                print(f"Coche {self.unique_id} bloqueado por {self.inactive_steps} pasos. Buscando cambio de carril.")
                 next_x, next_y = next_node
                 lateral_moves = [
                     (next_x, next_y + 1),  # Arriba
@@ -119,43 +110,46 @@ class Car(Agent):
                     (next_x - 1, next_y)   # Izquierda
                 ]
 
-                # Validar cada vecino lateral
                 for lateral in lateral_moves:
-                    if 0 <= lateral[0] < self.model.width and 0 <= lateral[1] < self.model.height:  # Dentro del mapa
+                    if 0 <= lateral[0] < self.model.width and 0 <= lateral[1] < self.model.height:
                         lateral_contents = self.model.grid.get_cell_list_contents(lateral)
                         if not any(isinstance(agent, (Car, Obstacle, Destination, Traffic_Light)) for agent in lateral_contents):
-                            print(f"Coche {self.unique_id} cambia al carril {lateral}.")
-                            self.model.grid.move_agent(self, lateral)
-                            self.calculate_path()  # Recalcular la ruta desde la nueva posición
-                            return
+                            lateral_directions = self.model.static_map[lateral[1]][lateral[0]].get("directions", [])
+                            if self.direction in lateral_directions:
+                                print(f"Coche {self.unique_id} cambia al carril {lateral}.")
+                                self.model.grid.move_agent(self, lateral)
+                                self.calculate_path()
+                                return
+                            else:
+                                print(f"Coche {self.unique_id} no puede cambiar al carril {lateral} porque no tiene la misma dirección.")
 
-            print(f"Coche {self.unique_id} no pudo cambiar de carril. Se detiene temporalmente.")
+            # Recalcular ruta alternativa tras 10 pasos bloqueados
+            if self.inactive_steps >= 10:
+                print(f"Coche {self.unique_id} bloqueado por 10 pasos. Recalculando ruta alternativa evitando {next_node}.")
+                self.blocked_node = next_node
+                self.calculate_path(avoid_node=self.blocked_node)
+                self.inactive_steps = 0  # Reiniciar contador tras recalcular
             return
 
-        # Si no está bloqueado, reiniciar el contador de pasos bloqueado
-        if hasattr(self, "blocked_steps"):
-            self.blocked_steps = 0
-
-        # Verificar semáforo en el siguiente nodo
+        # Resetear pasos inactivos si puede moverse
+        self.inactive_steps = 0
         traffic_light = next((agent for agent in cell_contents if isinstance(agent, Traffic_Light)), None)
-        if traffic_light and not traffic_light.state:  # Semáforo en rojo
+        if traffic_light and not traffic_light.state:
             print(f"Coche {self.unique_id} se detuvo frente al semáforo en el nodo {next_node}.")
             return
 
-        # Mover al coche al siguiente nodo
         print(f"Coche {self.unique_id} avanzando de {self.pos} al nodo {next_node}.")
         self.update_direction(self.pos, next_node)
         self.model.grid.move_agent(self, next_node)
-        self.pos = next_node  # Actualizar la posición actual
-        self.path.pop(0)  # Eliminar el nodo visitado de la ruta
-
-
+        self.pos = next_node
+        self.path.pop(0)
 
     def step(self):
         """
         Determina el movimiento del coche en el paso actual.
         """
         self.move()
+
 
 
 class Traffic_Light(Agent):

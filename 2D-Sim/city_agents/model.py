@@ -24,7 +24,7 @@ class CityModel(Model):
         # Variables para el control de generación de agentes
         self.total_agents = N  # Total de agentes que se deben generar
         self.spawned_agents = 0  # Contador de agentes generados
-        self.spawn_interval = 1  # Intervalo de pasos para generar agentes
+        self.spawn_interval = 2 # Intervalo de pasos para generar agentes
         self.step_count = 0  # Contador de pasos
 
         # Leer el archivo del mapa
@@ -109,19 +109,19 @@ class CityModel(Model):
                 elif spawn_pos == (self.width - 1, self.height - 1):
                     car.direction = "Down"
 
-                print(f"Coche {car.unique_id} dirección inicial: {car.direction}.")
+                #print(f"Coche {car.unique_id} dirección inicial: {car.direction}.")
                 self.grid.place_agent(car, spawn_pos)
             
                 self.schedule.add(car)
                 if self.destinations:
                     car.destination = random.choice(self.destinations)  # Asignar un destino aleatorio
-                print(f"Coche {car.unique_id} generado en {spawn_pos} con destino {car.destination}.")
+                #print(f"Coche {car.unique_id} generado en {spawn_pos} con destino {car.destination}.")
                 self.spawned_agents += 1
                 all_corners_blocked = False  # Al menos una esquina permitió generar un coche
 
         # Detener la simulación si no se pudo generar un coche en ninguna esquina
         if all_corners_blocked:
-            print("Todas las esquinas están bloqueadas. Deteniendo la simulación.")
+            #print("Todas las esquinas están bloqueadas. Deteniendo la simulación.")
             self.running = False
 
 
@@ -187,13 +187,13 @@ class CityModel(Model):
 
         return inherited_directions
 
-    def print_graph(self):
-        """
-        Imprime el grafo de la ciudad (lista de adyacencia):
-        """
-        print("\nGrafo de la ciudad (lista de adyacencia):")
-        for node, neighbors in self.graph.items():
-            print(f"{node} -> {neighbors}")
+    # def print_graph(self):
+    #     """
+    #     Imprime el grafo de la ciudad (lista de adyacencia):
+    #     """
+    #     # #print("\nGrafo de la ciudad (lista de adyacencia):")
+    #     # for node, neighbors in self.graph.items():
+    #     #     #print(f"{node} -> {neighbors}")
 
     def step(self):
         """Avanzar el modelo en un paso."""
@@ -205,5 +205,5 @@ class CityModel(Model):
             self.spawn_cars()
 
 # Uso del modelo y grafo
-model = CityModel(N=5)
-model.print_graph()
+# model = CityModel(N=5)
+# model.print_graph()
