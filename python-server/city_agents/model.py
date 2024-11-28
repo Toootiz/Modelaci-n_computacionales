@@ -2,6 +2,7 @@ from mesa import Model, agent
 from mesa.time import RandomActivation
 from mesa.space import MultiGrid
 from .agent import *
+from mesa.datacollection import DataCollector  # Importación del DataCollector
 import json
 import random
 
@@ -20,6 +21,8 @@ class CityModel(Model):
         self.graph = {}  # Grafo como lista de adyacencia
 
         # Variables para el control de generación de agentes
+        self.spawned_agents = 0  # Contador de agentes generados
+        self.agents_reached_destination = 0  # Contador de agentes que llegaron a su destino
         self.spawned_agents = 0  # Contador de agentes generados
         self.spawn_interval = 2  # Intervalo de pasos para generar agentes
         self.step_count = 0  # Contador de pasos
@@ -123,8 +126,27 @@ class CityModel(Model):
             # Crear los primeros 4 coches en las esquinas
             self.spawn_cars()
 
+        # DataCollector para recolectar datos durante la simulación
+        self.datacollector = DataCollector(
+            model_reporters={
+                "Current Agents": self.get_current_agents,
+                "Agents Reached Destination": self.get_agents_reached_destination,
+            }
+        )
+
+
         self.running = True
 
+    def get_current_agents(self):
+        """Obtiene el número actual de agentes en la simulación."""
+        return len(
+            [agent for agent in self.schedule.agents if isinstance(agent, Car)]
+        )
+
+    def get_agents_reached_destination(self):
+        """Obtiene el número de agentes que han llegado a su destino."""
+        return self.agents_reached_destination
+    
     def spawn_cars(self):
         """
         Generar coches en las cuatro esquinas.
@@ -248,9 +270,23 @@ class CityModel(Model):
 
     def step(self):
         """Avanzar el modelo en un paso."""
-        self.schedule.step()
-        self.step_count += 1
+        if self.running:  # Verificar si la simulación está activa
+            self.schedule.step()
+            self.step_count += 1
 
-        # Generar más coches cada intervalo de pasos
-        if self.step_count % self.spawn_interval == 0:
-            self.spawn_cars()
+            # Generar más coches cada intervalo de pasos
+            if self.step_count % self.spawn_interval == 0:
+                self.spawn_cars()
+
+            # Recolectar datos
+            self.datacollector.collect(self)
+
+            # Imprimir datos recolectados en este paso
+            current_agents = self.get_current_agents()
+            agents_reached = self.get_agents_reached_destination()
+            print(
+                f"Paso {self.step_count}: Agentes actuales = {current_agents}, "
+                f"Agentes que llegaron a su destino = {agents_reached}"
+            )
+
+
