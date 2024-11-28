@@ -613,7 +613,7 @@ async function drawScene() {
 
   frameCount++;
 
-  if (frameCount % 10 == 0) {
+  if (frameCount % 20 == 0) {
     frameCount = 0;
     await update();
   }
