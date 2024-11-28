@@ -21,10 +21,12 @@ class CityModel(Model):
 
         # Variables para el control de generación de agentes
         self.spawned_agents = 0  # Contador de agentes generados
-        self.spawn_interval = 10  # Intervalo de pasos para generar agentes
+        self.spawn_interval = 5  # Intervalo de pasos para generar agentes
         self.step_count = 0  # Contador de pasos
 
         # Leer el archivo del mapa
+        with open("city_files/2024_base.txt") as baseFile:
+            lines = baseFile.readlines()
             self.width = len(lines[0]) - 1
             self.height = len(lines)
 
