@@ -24,7 +24,7 @@ class CityModel(Model):
         self.spawned_agents = 0  # Contador de agentes generados
         self.agents_reached_destination = 0  # Contador de agentes que llegaron a su destino
         self.spawned_agents = 0  # Contador de agentes generados
-        self.spawn_interval = 2  # Intervalo de pasos para generar agentes
+        self.spawn_interval = 10  # Intervalo de pasos para generar agentes
         self.step_count = 0  # Contador de pasos
 
         # Leer el archivo del mapa

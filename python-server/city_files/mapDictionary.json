@@ -1,53 +1,53 @@
 {
-  ">": "Right",
-  "<": "Left",
-  "S": [
-    500000,
-    "Up",
-    "Down"
-  ],
-  "s": [
-    50000,
-    "Right",
-    "Left"
-  ],
-  "#": "Obstacle",
-  "v": "Down",
-  "V": "Down",
-  "^": "Up",
-  "D": "Destination",
-  "I": [
-    "Up",
-    "Left",
-    "Right",
-    "Down"
-  ],
-  "i": [
-    "Up",
-    "Right"
-  ],
-  "O": [
-    "Down",
-    "Left"
-  ],
-  "o": [
-    "Down",
-    "Right"
-  ],
-  "A": [
-    "Left",
-    "Down"
-  ],
-  "a": [
-    "Right",
-    "Down"
-  ],
-  "Z": [
-    "Right",
-    "Up"
-  ],
-  "z": [
-    "Left",
-    "Up"
-  ]
+    ">": "Right",
+    "<": "Left",
+    "S": [
+        5,
+        "Up",
+        "Down"
+    ],
+    "s": [
+        5,
+        "Right",
+        "Left"
+    ],
+    "#": "Obstacle",
+    "v": "Down",
+    "V": "Down",
+    "^": "Up",
+    "D": "Destination",
+    "I": [
+        "Up",
+        "Left",
+        "Right",
+        "Down"
+    ],
+    "i": [
+        "Up",
+        "Right"
+    ],
+    "O": [
+        "Down",
+        "Left"
+    ],
+    "o": [
+        "Down",
+        "Right"
+    ],
+    "A": [
+        "Left",
+        "Down"
+    ],
+    "a": [
+        "Right",
+        "Down"
+    ],
+    "Z": [
+        "Right",
+        "Up"
+    ],
+    "z": [
+        "Left",
+        "Up"
+    ]
 }
