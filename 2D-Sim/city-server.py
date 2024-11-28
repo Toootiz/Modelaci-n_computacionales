@@ -97,8 +97,7 @@ def getObstacles():
 def getLights():
     global cityModel
 
-    if cityModel is None:
-        return jsonify({"message": "Model not initialized"}), 400
+    
 
     if request.method == 'GET':
         try:
@@ -185,5 +184,5 @@ def updateModel():
 
 if __name__ == '__main__':
     # Run the flask server on port 8585
-    app.run(host="localhost", port=8585, debug=True)
+    app.run(host="localhost", port=8585, debug=False)
 

@@ -1,17 +1,20 @@
 #version 300 es
 precision highp float;
 
-in vec3 v_normal; 
-in vec3 v_lightDirection; //dirección de la fuente de luz
-in vec3 v_cameraDirection; //dirección de la cámara
+in vec3 v_normal;
+in vec3 v_cameraDirection;
+in vec3 v_worldPosition;
 
 // Scene uniforms
 uniform vec4 u_ambientLight;
-uniform vec4 u_diffuseLight;
-uniform vec4 u_specularLight;
 
+// Light arrays
+uniform int u_numLights;
+uniform vec3 u_lightWorldPositions[25];
+uniform vec4 u_lightDiffuseColors[25];
+uniform vec4 u_lightSpecularColors[25];
 
-// model uniforms
+// Model uniforms
 uniform vec4 u_ambientColor;
 uniform vec4 u_diffuseColor;
 uniform vec4 u_specularColor;
@@ -20,40 +23,51 @@ uniform float u_shininess;
 out vec4 outColor;
 
 void main() {
-    //Ambient light component
+    // Global ambient light (from the top light only)
     vec4 ambient = u_ambientLight * u_ambientColor;
 
+    vec3 normal = normalize(v_normal);
+    vec3 viewDir = normalize(v_cameraDirection);
 
+    vec4 totalDiffuse = vec4(0.0);
+    vec4 totalSpecular = vec4(0.0);
 
-    //Diffuse light component
-    vec4 diffuse = vec4(0, 0, 0, 1);
-    vec4 specular = vec4(0, 0, 0, 1);
-    vec3 v_n_n = normalize(v_normal); //vector normalizado
-    vec3 v_l_n = normalize(v_lightDirection); 
-    float lambert = dot(v_n_n, v_l_n);
-    if(lambert > 0.0){
-        diffuse = u_diffuseLight * u_diffuseColor * lambert;
-        //Specular light component
-        vec3 v_c_n = normalize(v_cameraDirection);
-        vec3 v_paralelo = v_n_n * dot(v_n_n, v_l_n);
-        vec3 v_perpendicular = v_l_n - v_paralelo;
-        vec3 v_reflejado = v_paralelo - v_perpendicular;
-        float spec = dot(v_c_n, v_reflejado);
-        if(spec > 0.0){
-            specular = u_specularLight * u_specularColor * pow(spec, u_shininess);
-        };
-    };
+    // Loop through all lights
+    for (int i = 0; i < u_numLights; ++i) {
+        vec3 lightDir = u_lightWorldPositions[i] - v_worldPosition;
+        float distance = length(lightDir);
+        lightDir = normalize(lightDir);
 
-    //Specular light component
-    vec3 v_c_n = normalize(v_cameraDirection);
-    vec3 v_paralelo = v_n_n * dot(v_n_n, v_l_n);
-    vec3 v_perpendicular = v_l_n - v_paralelo;
-    vec3 v_reflejado = v_paralelo - v_perpendicular;
-    float spec = dot(v_c_n, v_reflejado);
-    if(spec > 0.0){
-        specular = u_specularLight * u_specularColor * pow(spec, u_shininess);
-    };
+        // Attenuation: Only apply to traffic lights (not top light)
+        float attenuation = 1.0;
+        if (i > 0) { // Skip attenuation for the top light
+            attenuation = 1.0 / (1.0 + 0.1 * distance + 0.01 * distance * distance);
+        }
 
+        // Diffuse lighting with attenuation
+        float lambertian = max(dot(normal, lightDir), 0.0);
+        vec4 diffuse = u_lightDiffuseColors[i] * u_diffuseColor * lambertian * attenuation;
 
-    outColor = ambient + specular + diffuse;
+        // Specular lighting with attenuation
+        vec3 halfDir = normalize(lightDir + viewDir);
+        float specAngle = max(dot(halfDir, normal), 0.0);
+        float specularFactor = pow(specAngle, u_shininess);
+        vec4 specular = u_lightSpecularColors[i] * u_specularColor * specularFactor * attenuation;
+
+        // Separate contributions
+        if (i == 0) {
+            // Top light (global light)
+            ambient += diffuse;
+            totalSpecular += specular;
+        } else {
+            // Traffic lights (local lights)
+            totalDiffuse += diffuse;
+            totalSpecular += specular;
+        }
+    }
+
+    // Final color combines global ambient and local contributions
+    outColor = ambient + totalDiffuse + totalSpecular;
+    outColor.a = 1.0;
 }
+

@@ -27,17 +27,17 @@ import fsGLSL from "../assets/shaders/fs_phong.glsl?raw";
 const settings = {
   cameraPosition: {
     x: 0,
-    y: 9,
+    y: 35,
     z: 9,
   },
   lightPosition: {
     x: 10,
-    y: 10,
+    y: 7.5,
     z: 10,
   },
   ambientLight: [0.3, 0.3, 0.3, 1.0],
-  diffuseLight: [0.7, 0.7, 0.7, 1.0],
-  specularLight: [1.0, 1.0, 1.0, 1.0],
+  diffuseLight: [0.8, 0.8, 0.8, 1.0],
+  specularLight: [0.1, 0.1, 0.1, 1.0],
 };
 
 let frameCount = 0;
@@ -47,7 +47,6 @@ function loadObj(data) {
   const lines = data.split("\n");
   const positions = [];
   const normals = [];
-  const indices = [];
 
   const tempPositions = [];
   const tempNormals = [];
@@ -111,6 +110,7 @@ const obstacles = [];
 const trafficLights = [];
 const destinations = [];
 const roads = [];
+const dynamycTrafficLights = [];
 
 // Initialize WebGL-related variables
 let gl,
@@ -257,14 +257,22 @@ async function getAgents() {
         }
 
         if (!existingAgent) {
+          // Generar un color aleatorio para el nuevo agente
+          const randomColor = [
+            Math.random(),
+            Math.random(),
+            Math.random(),
+            1, // Alpha value
+          ];
+
           // Crear un nuevo agente y agregarlo al array
           const newAgent = new Object3D(
             agent.id,
             [agent.x, agent.y, agent.z],
             rotation,
-            [0.6, 0.8, 0.6],
+            [0.6, 0.8, 0.4],
             [0.1, 0.1, 0.1, 1], // ambientColor
-            [0.7, 0.3, 0.85, 1], // diffuseColor
+            randomColor, // diffuseColor (color aleatorio)
             [1.0, 1.0, 1.0, 1], // specularColor
             50, // shininess
           );
@@ -273,6 +281,7 @@ async function getAgents() {
           // Actualizar la posición y rotación del agente existente
           existingAgent.position = [agent.x, agent.y, agent.z];
           existingAgent.rotation = rotation;
+          // No cambiar los colores de los agentes existentes
         }
       }
 
@@ -310,9 +319,22 @@ async function getObstacles() {
           [0.2, 0.2, 0.2, 1], // ambientColor
           [0.5, 0.5, 0.8, 1], // diffuseColor
           [0.3, 0.3, 0.3, 1], // specularColor
-          10, // shininess
+          160, // shininess
         ); // Gray color
         obstacles.push(newObstacle);
+
+        // create a new road under the buildings
+        const newRoad = new Object3D(
+          obstacle.id,
+          [obstacle.x, obstacle.y - 1.001, obstacle.z],
+          [0, 0, 0],
+          [1, 0.2, 1],
+          [0.1, 0.1, 0.1, 1], // ambientColor
+          [0.3, 0.3, 0.3, 1], // diffuseColor
+          [0.3, 0.3, 0.3, 1], // specularColor
+          400, // shininess
+        ); // Dark gray color
+        roads.push(newRoad);
       }
       // Log the obstacles array
       console.log("Obstacles:", obstacles);
@@ -344,8 +366,8 @@ async function getLights() {
         // Create new traffic lights and add them to the trafficLights array
         for (const light of result.positions) {
           const color = light.state
-            ? [0.0, 1.0, 0.0, 1.0]
-            : [1.0, 0.0, 0.0, 1.0]; // Green or Red
+            ? [0.0, 1.0, 0.0, 0.5]
+            : [1.0, 0.0, 0.0, 0.5]; // Green or Red
 
           const newLight = new Object3D(
             light.id,
@@ -368,7 +390,7 @@ async function getLights() {
             [0.1, 0.1, 0.1, 1], // ambientColor
             [0.3, 0.3, 0.3, 1], // diffuseColor
             [0.3, 0.3, 0.3, 1], // specularColor
-            5, // shininess
+            400, // shininess
           ); // Dark gray color
           roads.push(newRoad);
         }
@@ -386,8 +408,8 @@ async function getLights() {
             // Update the traffic light's state and color
             current_light.state = light.state;
             current_light.diffuseColor = light.state
-              ? [0.0, 1.0, 0.0, 1.0]
-              : [1.0, 0.0, 0.0, 1.0]; // Green or Red
+              ? [0.0, 1.0, 0.0, 0.2]
+              : [1.0, 0.0, 0.0, 0.2]; // Green or Red
           }
         }
       }
@@ -419,7 +441,7 @@ async function getDestinations() {
           [0, 0, 0],
           [1, 0.2, 1],
           [0.1, 0.1, 0.1, 1], // ambientColor
-          [0.0, 0.0, 1.0, 1], // diffuseColor (Blue)
+          [0.0, 1, 1.0, 1], // diffuseColor (Blue)
           [0.3, 0.3, 0.3, 1], // specularColor
           10, // shininess
         ); // Blue color
@@ -457,7 +479,7 @@ async function getRoads() {
           [0.1, 0.1, 0.1, 1], // ambientColor
           [0.3, 0.3, 0.3, 1], // diffuseColor
           [0.3, 0.3, 0.3, 1], // specularColor
-          5, // shininess
+          400, // shininess
         ); // Dark gray color
         roads.push(newRoad);
       }
@@ -496,39 +518,75 @@ async function update() {
  * Draws the scene by rendering all objects.
  */
 async function drawScene() {
-  // Resize the canvas to match the display size
+  // Resize and clear the canvas
   twgl.resizeCanvasToDisplaySize(gl.canvas);
-
-  // Set the viewport to match the canvas size
   gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-
-  // Set the clear color and enable depth testing
   gl.clearColor(0.2, 0.2, 0.2, 1);
   gl.enable(gl.DEPTH_TEST);
-
-  // Clear the color and depth buffers
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-  // Use the program
   gl.useProgram(programInfo.program);
 
-  // Configura los uniformes globales (escena)
+  // Global uniforms (scene)
   const globalUniforms = {
     u_viewWorldPosition: [
       settings.cameraPosition.x + data.width / 2,
       settings.cameraPosition.y,
       settings.cameraPosition.z + data.height / 2,
     ],
-    u_lightWorldPosition: [
-      settings.lightPosition.x,
-      settings.lightPosition.y,
-      settings.lightPosition.z,
-    ],
     u_ambientLight: settings.ambientLight,
-    u_diffuseLight: settings.diffuseLight,
-    u_specularLight: settings.specularLight,
   };
-  twgl.setUniforms(programInfo, globalUniforms);
+
+  // Prepare arrays for multiple light sources
+  const MAX_LIGHTS = 25;
+  const lightPositions = [];
+  const lightDiffuseColors = [];
+  const lightSpecularColors = [];
+
+  // Include the main light
+  lightPositions.push([
+    settings.lightPosition.x,
+    settings.lightPosition.y,
+    settings.lightPosition.z,
+  ]);
+  lightDiffuseColors.push(settings.diffuseLight);
+  lightSpecularColors.push(settings.specularLight);
+
+  // Include traffic light sources
+  for (const light of trafficLights) {
+    lightPositions.push(light.position);
+    lightDiffuseColors.push(light.diffuseColor);
+    lightSpecularColors.push([0, 0, 0, 1.0]); // Default specular color
+  }
+
+  // Ensure we don't exceed MAX_LIGHTS
+  if (lightPositions.length > MAX_LIGHTS) {
+    lightPositions.length = MAX_LIGHTS;
+    lightDiffuseColors.length = MAX_LIGHTS;
+    lightSpecularColors.length = MAX_LIGHTS;
+  }
+
+  const numLights = lightPositions.length;
+
+  // Flatten arrays (turn into 1 dimensional array)
+  const flattenedLightPositions = lightPositions.flat();
+  const flattenedLightDiffuseColors = lightDiffuseColors.flat();
+  const flattenedLightSpecularColors = lightSpecularColors.flat();
+
+  // Create lights uniforms
+  const lightsUniforms = {
+    u_numLights: numLights,
+    u_lightWorldPositions: flattenedLightPositions,
+    u_lightDiffuseColors: flattenedLightDiffuseColors,
+    u_lightSpecularColors: flattenedLightSpecularColors,
+  };
+
+  // Combine all uniforms
+  const allUniforms = {
+    ...globalUniforms,
+    ...lightsUniforms,
+  };
+  twgl.setUniforms(programInfo, allUniforms);
 
   // Set up the view-projection matrix
   const viewProjectionMatrix = setupWorldView(gl);
@@ -673,37 +731,6 @@ function setupUI() {
   lightColorFolder.addColor(settings, "ambientLight");
   lightColorFolder.addColor(settings, "diffuseLight");
   lightColorFolder.addColor(settings, "specularLight");
-}
-
-// function for sphere
-function generateSphereData(radius, resolution) {
-  const positions = [];
-  const normals = [];
-
-  // Iterate over latitudes and longitudes
-  for (let latNumber = 0; latNumber <= resolution; latNumber++) {
-    const theta = (latNumber * Math.PI) / resolution; // Latitude angle
-    const sinTheta = Math.sin(theta);
-    const cosTheta = Math.cos(theta);
-
-    for (let longNumber = 0; longNumber <= resolution; longNumber++) {
-      const phi = (longNumber * 2 * Math.PI) / resolution; // Longitude angle
-      const sinPhi = Math.sin(phi);
-      const cosPhi = Math.cos(phi);
-
-      const x = cosPhi * sinTheta;
-      const y = cosTheta;
-      const z = sinPhi * sinTheta;
-
-      positions.push(radius * x, radius * y, radius * z);
-      normals.push(x, y, z);
-    }
-  }
-
-  return {
-    a_position: { numComponents: 3, data: positions },
-    a_normal: { numComponents: 3, data: normals },
-  };
 }
 
 main();
