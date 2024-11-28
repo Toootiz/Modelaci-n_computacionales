@@ -85,6 +85,10 @@ class Car(Agent):
         """
         if self.pos == self.destination:
             print(f"Coche {self.unique_id} ha llegado a su destino en {self.pos}.")
+
+            # Incrementar el contador de coches que llegaron a su destino en el modelo
+            self.model.agents_reached_destination += 1
+
             self.model.grid.remove_agent(self)
             self.model.schedule.remove(self)
             return
