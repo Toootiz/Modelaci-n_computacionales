@@ -60,7 +60,7 @@ def getAgents():
     if request.method == 'GET':
         try:
             carPositions = [
-                {"id": str(a.unique_id), "x": a.pos[0], "y": 1, "z": a.pos[1], "direction": a.direction}
+                {"id": str(a.unique_id), "x": a.pos[0], "y": 1.05, "z": a.pos[1], "direction": a.direction}
                 for a in cityModel.schedule.agents
                 if isinstance(a, Car)
             ]

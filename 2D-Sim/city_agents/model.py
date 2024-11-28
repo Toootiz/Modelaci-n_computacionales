@@ -21,7 +21,7 @@ class CityModel(Model):
 
         # Variables para el control de generación de agentes
         self.spawned_agents = 0  # Contador de agentes generados
-        self.spawn_interval = 5  # Intervalo de pasos para generar agentes
+        self.spawn_interval = 2  # Intervalo de pasos para generar agentes
         self.step_count = 0  # Contador de pasos
 
         # Leer el archivo del mapa
