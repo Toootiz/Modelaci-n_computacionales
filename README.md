@@ -30,3 +30,7 @@ In the python-server directory, run `python city-server.py`
 
 #### Frontend
 In the visualization directory, run `npx vite`
+
+##### Simulation Parameters
+> If you want the simulation to run faster, lower the value of `UPDATE_INTERVAL` in *city_agents.js*. If you want it to run slower, raise the value. This value is in seconds.
+> For determining the amount of steps that it takes for new agents to appear, change the `self.spawn_interval` value in *model.py*.
