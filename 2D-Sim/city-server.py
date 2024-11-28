@@ -8,10 +8,10 @@ from flask_cors import CORS, cross_origin
 from city_agents.model import CityModel 
 from city_agents.agent import Car, Traffic_Light, Destination, Obstacle, Road
 
-with open('city_files/2022_base.txt') as baseFile:
-    lines = baseFile.readlines()
-    width = len(lines[0])-1
-    height = len(lines)
+# with open('city_files/2022_base.txt') as baseFile:
+#     lines = baseFile.readlines()
+#     width = len(lines[0])-1
+#     height = len(lines)
 
 numAgents = 1
 cityModel = None
@@ -39,7 +39,7 @@ def initModel():
             print(f"Model parameters: {numAgents, width, height}")
 
             # Create the model using the parameters sent by the application
-            cityModel = CityModel(numAgents)
+            cityModel = CityModel()
 
             # Return a message saying that the model was created successfully
             return jsonify({"message": "Parameters received, model initiated."})
@@ -96,9 +96,6 @@ def getObstacles():
 @cross_origin()
 def getLights():
     global cityModel
-
-    
-
     if request.method == 'GET':
         try:
             lightPositions = [

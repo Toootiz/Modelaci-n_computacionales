@@ -13,11 +13,14 @@
     ],
     "#": "Obstacle",
     "v": "Down",
+    "V": "Down",
     "^": "Up",
     "D": "Destination",
     "I": [
         "Up",
-        "Left"
+        "Left",
+        "Right",
+        "Down"
     ],
     "i": [
         "Up",

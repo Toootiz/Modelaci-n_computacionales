@@ -7,13 +7,10 @@ import random
 
 
 class CityModel(Model):
-    """ 
-    Creates a model based on a city map.
-
-    Args:
-        N: Number of agents in the simulation
     """
-    def __init__(self, N):
+    Creates a model based on a city map.
+    """
+    def __init__(self):
         # Cargar el diccionario de datos del mapa
         dataDictionary = json.load(open("city_files/mapDictionary.json"))
 
@@ -22,13 +19,12 @@ class CityModel(Model):
         self.graph = {}  # Grafo como lista de adyacencia
 
         # Variables para el control de generación de agentes
-        self.total_agents = N  # Total de agentes que se deben generar
         self.spawned_agents = 0  # Contador de agentes generados
-        self.spawn_interval = 1  # Intervalo de pasos para generar agentes
+        self.spawn_interval = 2  # Intervalo de pasos para generar agentes
         self.step_count = 0  # Contador de pasos
 
         # Leer el archivo del mapa
-        with open('city_files/2023_base.txt') as baseFile:
+        with open('city_files/2024_base.txt') as baseFile:
             lines = baseFile.readlines()
             self.width = len(lines[0]) - 1
             self.height = len(lines)
@@ -58,7 +54,7 @@ class CityModel(Model):
                         self.graph[cell_pos] = self.get_neighbors(cell_pos, directions, dataDictionary, lines, col)
 
                         # Asignar agentes a las celdas según su tipo
-                        if col in ["v", "^", ">", "<", "I", "i", "O", "o", "A", "a", "Z", "z"]:
+                        if col in ["V", "v", "^", ">", "<", "I", "i", "O", "o", "A", "a", "Z", "z"]:
                             agent = Road(f"r_{r*self.width+c}", self, directions)
                             self.grid.place_agent(agent, cell_pos)
                             self.static_map[cell_pos[1]][cell_pos[0]] = {"type": "Road", "directions": directions}
@@ -83,13 +79,12 @@ class CityModel(Model):
             # Crear los primeros 4 coches en las esquinas
             self.spawn_cars()
 
-        self.num_agents = N
         self.running = True
 
     def spawn_cars(self):
         """
         Generar coches en las cuatro esquinas.
-        Detener la simulación si las cuatro esquinas están ocupadas.
+        Detener la simulación si las cuatro esquinas están bloqueadas.
         """
         all_corners_blocked = True  # Bandera para verificar si todas las esquinas están bloqueadas
 
@@ -108,19 +103,17 @@ class CityModel(Model):
                     car.direction = "Down"
                 elif spawn_pos == (self.width - 1, self.height - 1):
                     car.direction = "Left"
+
                 self.grid.place_agent(car, spawn_pos)
                 self.schedule.add(car)
                 if self.destinations:
                     car.destination = random.choice(self.destinations)  # Asignar un destino aleatorio
-                print(f"Coche {car.unique_id} generado en {spawn_pos} con destino {car.destination}.")
                 self.spawned_agents += 1
                 all_corners_blocked = False  # Al menos una esquina permitió generar un coche
 
         # Detener la simulación si no se pudo generar un coche en ninguna esquina
         if all_corners_blocked:
-            print("Todas las esquinas están bloqueadas. Deteniendo la simulación.")
             self.running = False
-
 
     def get_neighbors(self, pos, directions, dataDictionary, lines, cell_type):
         """
@@ -166,7 +159,6 @@ class CityModel(Model):
 
         return neighbors
 
-
     def get_inherited_direction(self, pos, lines, dataDictionary):
         """
         Obtiene la dirección heredada para una celda de semáforo.
@@ -184,23 +176,11 @@ class CityModel(Model):
 
         return inherited_directions
 
-    def print_graph(self):
-        """
-        Imprime el grafo de la ciudad (lista de adyacencia):
-        """
-        # print("\nGrafo de la ciudad (lista de adyacencia):")
-        # for node, neighbors in self.graph.items():
-        #     print(f"{node} -> {neighbors}")
-
     def step(self):
         """Avanzar el modelo en un paso."""
         self.schedule.step()
         self.step_count += 1
 
-        # Generar más coches cada 10 pasos
+        # Generar más coches cada intervalo de pasos
         if self.step_count % self.spawn_interval == 0:
             self.spawn_cars()
-
-# Uso del modelo y grafo
-# model = CityModel(N=5)
-# model.print_graph()
