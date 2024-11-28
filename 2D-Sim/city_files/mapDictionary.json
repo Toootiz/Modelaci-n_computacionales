@@ -18,7 +18,9 @@
     "D": "Destination",
     "I": [
         "Up",
-        "Left"
+        "Left",
+        "Right",
+        "Down"
     ],
     "i": [
         "Up",
