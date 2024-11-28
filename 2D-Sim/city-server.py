@@ -39,7 +39,7 @@ def initModel():
             print(f"Model parameters: {numAgents, width, height}")
 
             # Create the model using the parameters sent by the application
-            cityModel = CityModel(numAgents)
+            cityModel = CityModel()
 
             # Return a message saying that the model was created successfully
             return jsonify({"message": "Parameters received, model initiated."})
@@ -96,9 +96,6 @@ def getObstacles():
 @cross_origin()
 def getLights():
     global cityModel
-
-    
-
     if request.method == 'GET':
         try:
             lightPositions = [
