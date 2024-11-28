@@ -34,22 +34,33 @@ void main() {
 
     // Loop through all lights
     for (int i = 0; i < u_numLights; ++i) {
-        vec3 lightDir = normalize(u_lightWorldPositions[i] - v_worldPosition);
-        float lambertian = max(dot(normal, lightDir), 0.0);
-        vec4 diffuse = u_lightDiffuseColors[i] * u_diffuseColor * lambertian;
+        vec3 lightDir = u_lightWorldPositions[i] - v_worldPosition;
+        float distance = length(lightDir);
+        lightDir = normalize(lightDir);
 
+        // Attenuation: Only apply to traffic lights (not top light)
+        float attenuation = 1.0;
+        if (i > 0) { // Skip attenuation for the top light
+            attenuation = 1.0 / (1.0 + 0.1 * distance + 0.01 * distance * distance);
+        }
+
+        // Diffuse lighting with attenuation
+        float lambertian = max(dot(normal, lightDir), 0.0);
+        vec4 diffuse = u_lightDiffuseColors[i] * u_diffuseColor * lambertian * attenuation;
+
+        // Specular lighting with attenuation
         vec3 halfDir = normalize(lightDir + viewDir);
         float specAngle = max(dot(halfDir, normal), 0.0);
         float specularFactor = pow(specAngle, u_shininess);
-        vec4 specular = u_lightSpecularColors[i] * u_specularColor * specularFactor;
+        vec4 specular = u_lightSpecularColors[i] * u_specularColor * specularFactor * attenuation;
 
-        // Separate contributions for global and local lights
+        // Separate contributions
         if (i == 0) {
-            // Top light (global)
+            // Top light (global light)
             ambient += diffuse;
             totalSpecular += specular;
         } else {
-            // Local lights (traffic lights)
+            // Traffic lights (local lights)
             totalDiffuse += diffuse;
             totalSpecular += specular;
         }

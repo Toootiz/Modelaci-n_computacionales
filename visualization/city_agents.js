@@ -32,12 +32,12 @@ const settings = {
   },
   lightPosition: {
     x: 10,
-    y: 20,
+    y: 7.5,
     z: 10,
   },
   ambientLight: [0.3, 0.3, 0.3, 1.0],
-  diffuseLight: [0.7, 0.7, 0.7, 0.7],
-  specularLight: [1.0, 1.0, 1.0, 1.0],
+  diffuseLight: [0.8, 0.8, 0.8, 1.0],
+  specularLight: [0.1, 0.1, 0.1, 1.0],
 };
 
 let frameCount = 0;
@@ -47,7 +47,6 @@ function loadObj(data) {
   const lines = data.split("\n");
   const positions = [];
   const normals = [];
-  const indices = [];
 
   const tempPositions = [];
   const tempNormals = [];
@@ -320,9 +319,22 @@ async function getObstacles() {
           [0.2, 0.2, 0.2, 1], // ambientColor
           [0.5, 0.5, 0.8, 1], // diffuseColor
           [0.3, 0.3, 0.3, 1], // specularColor
-          60, // shininess
+          160, // shininess
         ); // Gray color
         obstacles.push(newObstacle);
+
+        // create a new road under the buildings
+        const newRoad = new Object3D(
+          obstacle.id,
+          [obstacle.x, obstacle.y - 1.001, obstacle.z],
+          [0, 0, 0],
+          [1, 0.2, 1],
+          [0.1, 0.1, 0.1, 1], // ambientColor
+          [0.3, 0.3, 0.3, 1], // diffuseColor
+          [0.3, 0.3, 0.3, 1], // specularColor
+          400, // shininess
+        ); // Dark gray color
+        roads.push(newRoad);
       }
       // Log the obstacles array
       console.log("Obstacles:", obstacles);
@@ -378,7 +390,7 @@ async function getLights() {
             [0.1, 0.1, 0.1, 1], // ambientColor
             [0.3, 0.3, 0.3, 1], // diffuseColor
             [0.3, 0.3, 0.3, 1], // specularColor
-            5, // shininess
+            400, // shininess
           ); // Dark gray color
           roads.push(newRoad);
         }
@@ -429,7 +441,7 @@ async function getDestinations() {
           [0, 0, 0],
           [1, 0.2, 1],
           [0.1, 0.1, 0.1, 1], // ambientColor
-          [0.0, 0.0, 1.0, 1], // diffuseColor (Blue)
+          [0.0, 1, 1.0, 1], // diffuseColor (Blue)
           [0.3, 0.3, 0.3, 1], // specularColor
           10, // shininess
         ); // Blue color
@@ -467,7 +479,7 @@ async function getRoads() {
           [0.1, 0.1, 0.1, 1], // ambientColor
           [0.3, 0.3, 0.3, 1], // diffuseColor
           [0.3, 0.3, 0.3, 1], // specularColor
-          5, // shininess
+          400, // shininess
         ); // Dark gray color
         roads.push(newRoad);
       }
