@@ -38,5 +38,5 @@ with open("../city_files/2024_base.txt") as baseFile:
 grid = CanvasGrid(agent_portrayal, width, height, 500, 500)
 
 server = ModularServer(CityModel, [grid], "Traffic Base")
-server.port = 8521
+server.port = 8523
 server.launch()

@@ -244,7 +244,7 @@ async function getAgents() {
         );
 
         // Determinar la rotación según la dirección del agente
-        if (agent.direction == "Up") {
+        if (agent.direction == "Down") {
           rotation = [0, 0, 0];
         } else if (agent.direction == "Down") {
           rotation = [0, Math.PI, 0];
@@ -309,32 +309,34 @@ async function getObstacles() {
       // Parse the response as JSON
       let result = await response.json();
 
-      // Create new obstacles and add them to the obstacles array
-      for (const obstacle of result.positions) {
-        const newObstacle = new Object3D(
-          obstacle.id,
-          [obstacle.x, obstacle.y, obstacle.z],
-          [0, 0, 0],
-          [0.6, 0.8, 0.6],
-          [0.2, 0.2, 0.2, 1], // ambientColor
-          [0.5, 0.5, 0.8, 1], // diffuseColor
-          [0.3, 0.3, 0.3, 1], // specularColor
-          160, // shininess
-        ); // Gray color
-        obstacles.push(newObstacle);
+      if (obstacles.length == 0) {
+        // Create new obstacles and add them to the obstacles array
+        for (const obstacle of result.positions) {
+          const newObstacle = new Object3D(
+            obstacle.id,
+            [obstacle.x, obstacle.y, obstacle.z],
+            [0, 0, 0],
+            [0.6, 0.8, 0.6],
+            [0.2, 0.2, 0.2, 1], // ambientColor
+            [0.5, 0.5, 0.8, 1], // diffuseColor
+            [0.3, 0.3, 0.3, 1], // specularColor
+            160, // shininess
+          ); // Gray color
+          obstacles.push(newObstacle);
 
-        // create a new road under the buildings
-        const newRoad = new Object3D(
-          obstacle.id,
-          [obstacle.x, obstacle.y - 1.001, obstacle.z],
-          [0, 0, 0],
-          [1, 0.2, 1],
-          [0.1, 0.1, 0.1, 1], // ambientColor
-          [0.3, 0.3, 0.3, 1], // diffuseColor
-          [0.3, 0.3, 0.3, 1], // specularColor
-          400, // shininess
-        ); // Dark gray color
-        roads.push(newRoad);
+          // create a new road under the buildings
+          const newRoad = new Object3D(
+            obstacle.id,
+            [obstacle.x, obstacle.y - 1.001, obstacle.z],
+            [0, 0, 0],
+            [1, 0.2, 1],
+            [0.1, 0.1, 0.1, 1], // ambientColor
+            [0.3, 0.3, 0.3, 1], // diffuseColor
+            [0.3, 0.3, 0.3, 1], // specularColor
+            400, // shininess
+          ); // Dark gray color
+          roads.push(newRoad);
+        }
       }
       // Log the obstacles array
       console.log("Obstacles:", obstacles);
@@ -485,6 +487,7 @@ async function getRoads() {
       }
       // Log the roads array
       console.log("Roads:", roads);
+      // console.log("Response", result.positions);
     }
   } catch (error) {
     // Log any errors that occur during the request
@@ -610,7 +613,7 @@ async function drawScene() {
 
   frameCount++;
 
-  if (frameCount % 30 == 0) {
+  if (frameCount % 10 == 0) {
     frameCount = 0;
     await update();
   }
