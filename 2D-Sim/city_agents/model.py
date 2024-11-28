@@ -188,9 +188,9 @@ class CityModel(Model):
         """
         Imprime el grafo de la ciudad (lista de adyacencia):
         """
-        print("\nGrafo de la ciudad (lista de adyacencia):")
-        for node, neighbors in self.graph.items():
-            print(f"{node} -> {neighbors}")
+        # print("\nGrafo de la ciudad (lista de adyacencia):")
+        # for node, neighbors in self.graph.items():
+        #     print(f"{node} -> {neighbors}")
 
     def step(self):
         """Avanzar el modelo en un paso."""
@@ -202,5 +202,5 @@ class CityModel(Model):
             self.spawn_cars()
 
 # Uso del modelo y grafo
-model = CityModel(N=5)
-model.print_graph()
+# model = CityModel(N=5)
+# model.print_graph()
