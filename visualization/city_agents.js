@@ -322,13 +322,20 @@ async function getObstacles() {
       if (obstacles.length == 0) {
         // Create new obstacles and add them to the obstacles array
         for (const obstacle of result.positions) {
+          const randomColor2 = [
+            Math.random() * 0.5 + 0.5,
+            Math.random() * 0.5 + 0.5,
+            Math.random() * 0.5 + 0.5,
+            0.5, // Valor alfa
+          ];
+
           const newObstacle = new Object3D(
             obstacle.id,
             [obstacle.x, obstacle.y, obstacle.z],
             [0, 0, 0],
             [0.6, 0.8, 0.6],
             [0.2, 0.2, 0.2, 1], // ambientColor
-            [0.5, 0.5, 0.8, 1], // diffuseColor
+            randomColor2, // diffuseColor
             [0.3, 0.3, 0.3, 1], // specularColor
             160, // shininess
           ); // Gray color
@@ -400,7 +407,7 @@ async function getLights() {
             [0, 0, 0],
             [1, 0.2, 1],
             [0.1, 0.1, 0.1, 1], // ambientColor
-            [0.3, 0.3, 0.3, 1], // diffuseColor
+            [0.1, 0.1, 0.1, 1], // diffuseColor
             [0.3, 0.3, 0.3, 1], // specularColor
             400, // shininess
           ); // Dark gray color
@@ -489,12 +496,26 @@ async function getRoads() {
           [0, 0, 0],
           [1, 0.2, 1],
           [0.1, 0.1, 0.1, 1], // ambientColor
-          [0.3, 0.3, 0.3, 1], // diffuseColor
+          [0.1, 0.1, 0.1, 1], // diffuseColor
           [0.3, 0.3, 0.3, 1], // specularColor
           400, // shininess
         ); // Dark gray color
         roads.push(newRoad);
+
+        // instantiate a small white dot in the middle of the road
+        const newRoadDot = new Object3D(
+          road.id,
+          [road.x, road.y + 0.001, road.z],
+          [0, 0, 0],
+          [0.1, 0.3, 0.1],
+          [0.1, 0.1, 0.1, 1], // ambientColor
+          [1, 1, 1, 1], // diffuseColor
+          [1, 1, 1, 1], // specularColor
+          100, // shininess
+        ); // White color
+        roads.push(newRoadDot);
       }
+
       // Log the roads array
       console.log("Roads:", roads);
       // console.log("Response", result.positions);
