@@ -538,7 +538,7 @@ async function drawScene() {
   };
 
   // Prepare arrays for multiple light sources
-  const MAX_LIGHTS = 25;
+  const MAX_LIGHTS = 28;
   const lightPositions = [];
   const lightDiffuseColors = [];
   const lightSpecularColors = [];

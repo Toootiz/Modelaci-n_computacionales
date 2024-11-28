@@ -13,7 +13,7 @@ class CityModel(Model):
         self.destinations = []
         self.graph = {}
         self.spawned_agents = 0
-        self.spawn_interval = 1
+        self.spawn_interval = 2
         self.step_count = 0
 
         with open('city_files/2024_base.txt') as baseFile:

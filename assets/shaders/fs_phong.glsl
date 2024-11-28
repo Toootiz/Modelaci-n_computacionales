@@ -10,9 +10,9 @@ uniform vec4 u_ambientLight;
 
 // Light arrays
 uniform int u_numLights;
-uniform vec3 u_lightWorldPositions[25];
-uniform vec4 u_lightDiffuseColors[25];
-uniform vec4 u_lightSpecularColors[25];
+uniform vec3 u_lightWorldPositions[28];
+uniform vec4 u_lightDiffuseColors[28];
+uniform vec4 u_lightSpecularColors[28];
 
 // Model uniforms
 uniform vec4 u_ambientColor;
