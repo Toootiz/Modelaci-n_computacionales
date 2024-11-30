@@ -1,3 +1,9 @@
+
+# Gabriel Muñoz Luna A01028774
+# 24/11/2024
+# File with the agents for the city simulation
+# This file contains the agents for the city simulation, such as cars, traffic lights, and obstacles.
+
 from mesa import Agent
 from collections import deque
 
@@ -263,5 +269,3 @@ class Road(Agent):
         pass
 
 
-class Zepeling(Agent):
-    pass

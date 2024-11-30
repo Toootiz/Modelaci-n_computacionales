@@ -1,3 +1,7 @@
+# Gabriel Muñoz Luna A01028774
+# 24/11/2024
+# File with the server for the city simulation
+
 from agent import *
 from model import CityModel
 from mesa.visualization import CanvasGrid, ModularServer

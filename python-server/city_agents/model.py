@@ -1,3 +1,12 @@
+
+# Gabriel Muñoz Luna A01028774
+# 24/11/2024
+# File with the model for the city simulation
+# This file contains the model for the city simulation, which includes the city map, agents, and the simulation itself.
+# The model stops the simulation if all four corners are blocked.
+# The map is loaded from a file and the agents are created based on the map data.
+
+
 from mesa import Model, agent
 from mesa.time import RandomActivation
 from mesa.space import MultiGrid
