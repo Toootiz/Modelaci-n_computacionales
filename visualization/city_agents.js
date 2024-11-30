@@ -40,7 +40,7 @@ const settings = {
   specularLight: [0.1, 0.1, 0.1, 1.0],
 };
 
-const UPDATE_INTERVAL = 1; // Intervalo de actualización en segundos
+const UPDATE_INTERVAL = 0.05; // Intervalo de actualización en segundos
 
 // carga los datos del obj a json
 function loadObj(data) {
