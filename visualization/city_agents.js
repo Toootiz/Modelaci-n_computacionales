@@ -40,7 +40,7 @@ const settings = {
   specularLight: [0.1, 0.1, 0.1, 1.0],
 };
 
-const UPDATE_INTERVAL = 0.05; // Intervalo de actualización en segundos
+const UPDATE_INTERVAL = 0.25; // Intervalo de actualización en segundos
 
 // carga los datos del obj a json
 function loadObj(data) {
@@ -250,9 +250,9 @@ async function getAgents() {
 
         // Determinar la rotación según la dirección del agente
         if (agent.direction == "Down") {
-          rotation = [0, 0, 0];
-        } else if (agent.direction == "Up") {
           rotation = [0, Math.PI, 0];
+        } else if (agent.direction == "Up") {
+          rotation = [0, 0, 0];
         } else if (agent.direction == "Left") {
           rotation = [0, -Math.PI / 2, 0];
         } else if (agent.direction == "Right") {
