@@ -11,7 +11,7 @@ Simulation of CDMX traffic through python and js [Vite](https://es.vitejs.dev/gu
 ## Cloning the repository
 
 In your terminal, run:
-    ```git
+    ```
     git clone https://github.com/Toootiz/Modelacion_Reto
     ```
     
