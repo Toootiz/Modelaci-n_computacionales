@@ -8,6 +8,8 @@ Simulation of CDMX traffic through python and js [Vite](https://es.vitejs.dev/gu
 - [Gabriel Muñoz Luna](https://github.com/Toootiz)
 - [Miguel Enrique Soria](https://github.com/mesc2004)
 
+## [Video link](https://www.youtube.com/watch?v=N64wJhSg8BI)
+
 ## Cloning the repository
 
 In your terminal, run:
